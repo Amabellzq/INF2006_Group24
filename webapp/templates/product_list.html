@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}All Deals{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -8,7 +8,7 @@
   <!-- "Mega Card" with search button -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <form method="GET" action="{{ url_for('admin.dashboard') }}" class="row g-3 align-items-center">
+      <form method="GET" action="{{ url_for('products.product_list') }}" class="row g-3 align-items-center">
         <div class="col-auto">
           <input
             type="text"
@@ -40,7 +40,7 @@
         <!-- Product image (BLOB or placeholder) -->
         {% if product.image_data %}
           <img
-            src="{{ url_for('admin.product_image', product_id=product.id) }}"
+            src="{{ url_for('products.product_image', product_id=product.id) }}"
             class="card-img-top"
             alt="{{ product.name }}"
           >
