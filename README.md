@@ -46,7 +46,7 @@ Execute the following SQL command:
 CREATE DATABASE voucherhub;
 ```
 ### Environment Configuration
-Place the .env 
+Place the .env on project's root directory
 ```bash
 # Database Configuration
 DB_USER=root
