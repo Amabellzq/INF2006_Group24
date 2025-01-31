@@ -1,9 +1,13 @@
 # webapp/routes/admin.py
 from flask import Blueprint, render_template, redirect, url_for
+from flask import send_file, abort
+from flask import request, flash
 from flask_login import login_required, current_user
-from webapp.models.product import Product
 from webapp.extensions import db
+from webapp.models.product import Product
 from webapp.forms import ProductForm
+from io import BytesIO
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -17,12 +21,6 @@ def dashboard():
     products = Product.query.all()
     return render_template('admin_dashboard.html', products=products)
 
-from flask import request, flash
-from flask_login import login_required, current_user
-from webapp.extensions import db
-from webapp.models.product import Product
-from webapp.forms import ProductForm
-from io import BytesIO
 
 @admin_bp.route('/admin/products/new', methods=['GET', 'POST'])
 @login_required
@@ -73,6 +71,7 @@ def create_product():
 @admin_bp.route('/admin/products/<int:product_id>', methods=['GET', 'POST'])
 @login_required
 def edit_product(product_id):
+    """Edit an existing product (Admin Only)."""
     # Only admins can edit products
     if current_user.role != 'admin':
         return redirect(url_for('main.home'))
@@ -81,15 +80,22 @@ def edit_product(product_id):
     form = ProductForm(obj=product)
 
     if form.validate_on_submit():
-        form.populate_obj(product)
-        db.session.commit()
-        return redirect(url_for('admin.dashboard'))
+        try:
+            form.populate_obj(product)  # Update non-image fields
+
+            # Handle the image file upload
+            image_file = request.files.get('image')
+            if image_file and image_file.filename:
+                product.image_data = image_file.read()  # Update image BLOB
+
+            db.session.commit()
+            flash("Product updated successfully!", "success")
+            return redirect(url_for('admin.dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"An error occurred: {str(e)}", "error")
 
     return render_template('admin_crud.html', form=form, product=product)
-
-
-from flask import send_file, abort
-from io import BytesIO
 
 
 @admin_bp.route('/admin/products/<int:product_id>/image')

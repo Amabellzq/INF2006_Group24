@@ -1,70 +1,70 @@
-<!-- templates/order_detail.html -->
 {% extends "base.html" %}
 
 {% block title %}Order #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="row g-5">
-    <!-- Order Details -->
-    <div class="col-md-7">
-        <div class="card shadow">
-            <div class="card-body">
-                <h2 class="card-title mb-4">Order Details</h2>
+<div class="container mt-4">
+    <div class="row g-5">
+        <!-- Order Details -->
+        <div class="col-md-7">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Order Details</h2>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h5>Order Information</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Order #:</strong> {{ order.id }}</li>
-                            <li><strong>Date:</strong> {{ order.created_at.strftime('%b %d, %Y %H:%M') }}</li>
-                            <li><strong>Status:</strong> {{ order.status|title }}</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Payment Information</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Total:</strong> ${{ order.total_amount }}</li>
-                            <li><strong>Payment Method:</strong> **** {{ order.payment_method[-4:] }}</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <h5 class="mb-3">Items</h5>
-                <div class="list-group">
-                    {% for item in order.items %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ item.product.name }}</h6>
-                                <small class="text-muted">Quantity: {{ item.quantity }}</small>
-                            </div>
-                            <span class="text-primary">${{ item.unit_price * item.quantity }}</span>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Order Information</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Order #:</strong> {{ order.id }}</li>
+                                <li><strong>Date:</strong> {{ order.created_at.strftime('%b %d, %Y %H:%M') }}</li>
+                                <li><strong>Status:</strong> 
+                                    <span class="badge 
+                                        {% if order.status == 'paid' %}bg-success
+                                        {% elif order.status == 'pending' %}bg-warning
+                                        {% elif order.status == 'refunded' %}bg-info
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ order.status|title }}
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Payment Information</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Total:</strong> ${{ "%.2f"|format(order.total_amount) }}</li>
+                            </ul>
                         </div>
                     </div>
-                    {% endfor %}
+
+                    <h5 class="mb-3">Product Details</h5>
+                    <div class="card border-light shadow-sm p-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4 text-center">
+                                <img src="{{ url_for('products.product_image', product_id=order.product_id) }}"
+                                     alt="{{ product.name }}"
+                                     class="img-fluid rounded shadow-sm"
+                                     style="max-height: 120px;">
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-1">{{ product.name }}</h6>
+                                <p class="text-muted mb-0">Price: ${{ "%.2f"|format(order.unit_price) }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Customer Info -->
-    <div class="col-md-5">
-        <div class="card shadow">
-            <div class="card-body">
-                <h5 class="card-title mb-4">Customer Information</h5>
-                <ul class="list-unstyled">
-                    <li><strong>Name:</strong> {{ order.user.name }}</li>
-                    <li><strong>Email:</strong> {{ order.user.email }}</li>
-                    <li><strong>Phone:</strong> {{ order.shipping.phone }}</li>
-                </ul>
-
-                <h5 class="mt-4 mb-3">Shipping Address</h5>
-                <address>
-                    {{ order.shipping.address }}<br>
-                    {{ order.shipping.city }}, {{ order.shipping.state }}<br>
-                    {{ order.shipping.postal_code }}<br>
-                    {{ order.shipping.country }}
-                </address>
+        <!-- Customer Info -->
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Customer Information</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Name:</strong> {{ order.user.name }}</li>
+                        <li><strong>Email:</strong> {{ order.user.email }}</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
