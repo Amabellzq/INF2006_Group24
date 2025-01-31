@@ -1,25 +1,52 @@
-<!-- templates/product_detail.html -->
 {% extends "base.html" %}
-
 {% block title %}{{ product.name }}{% endblock %}
 
 {% block content %}
 <div class="row g-5">
     <!-- Product Images -->
     <div class="col-md-6">
-        <img src="{{ product.image_url }}" class="img-fluid rounded-3 shadow" alt="{{ product.name }}">
-        <div class="row mt-3 g-2">
-            <div class="col-3"><img src="{{ product.image_url }}" class="img-thumbnail"></div>
-            <div class="col-3"><img src="{{ product.image_url }}" class="img-thumbnail"></div>
-        </div>
+        {% if product.image_data %}
+            <!-- Main image from BLOB route -->
+            <img 
+                src="{{ url_for('products.product_image', product_id=product.id) }}" 
+                class="img-fluid rounded-3 shadow" 
+                alt="{{ product.name }}"
+            >
+
+        {% else %}
+            <!-- Fallback if no BLOB in DB -->
+            <img 
+                src="{{ product.image_url or 'https://via.placeholder.com/600x400?text=No+Image' }}"
+                class="img-fluid rounded-3 shadow" 
+                alt="{{ product.name }}"
+            >
+            <div class="row mt-3 g-2">
+                <div class="col-3">
+                    <img 
+                        src="{{ product.image_url or 'https://via.placeholder.com/100x100?text=No+Image' }}"
+                        class="img-thumbnail"
+                    >
+                </div>
+                <div class="col-3">
+                    <img 
+                        src="{{ product.image_url or 'https://via.placeholder.com/100x100?text=No+Image' }}"
+                        class="img-thumbnail"
+                    >
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Product Details -->
     <div class="col-md-6">
         <h1 class="mb-3">{{ product.name }}</h1>
         <div class="d-flex align-items-center mb-4">
-            <h2 class="text-danger me-3">${{ "%.2f"|format(product.current_price) }}</h2>
-            <s class="text-muted">${{ "%.2f"|format(product.original_price) }}</s>
+            <h2 class="text-danger me-3">
+                ${{ "%.2f"|format(product.discount_price) }}
+            </h2>
+            <s class="text-muted">
+                ${{ "%.2f"|format(product.original_price) }}
+            </s>
         </div>
 
         <div class="mb-4">

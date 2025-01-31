@@ -76,11 +76,11 @@
 
         <div class="card-footer d-flex gap-2">
           <!-- "View Details" (Admin Edit) -->
-          <a
-            href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+             <a
+            href="{{ url_for('products.product_detail', product_id=product.id) }}"
             class="btn btn-sm btn-primary flex-fill text-center"
           >
-            <i class="fas fa-edit me-1"></i>View Details
+            <i class="fas fa-eye me-1"></i>View Details
           </a>
 
           <!-- "Purchase" (redirects to payment) -->
