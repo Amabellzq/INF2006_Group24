@@ -12,15 +12,24 @@
                     {{ 'Edit' if product else 'Create' }} Product
                 </h2>
 
-                <form method="POST"
-                      action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_product') }}{% endif %}">
+                <!-- Notice `enctype="multipart/form-data"` for file uploads -->
+                <!-- Also note `{{ form.hidden_tag() }}` to include the CSRF token -->
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_product') }}{% endif %}"
+                >
+                    {{ form.hidden_tag() }}
+
                     <div class="mb-3">
                         <label class="form-label">Product Name</label>
-                        <input type="text"
-                               class="form-control"
-                               name="name"
-                               value="{{ product.name if product }}"
-                               required>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="name"
+                            value="{{ product.name if product else '' }}"
+                            required
+                        >
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -28,54 +37,70 @@
                             <label class="form-label">Original Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number"
-                                       class="form-control"
-                                       name="original_price"
-                                       step="0.01"
-                                       value="{{ product.original_price if product }}"
-                                       required>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    name="original_price"
+                                    step="0.01"
+                                    value="{{ product.original_price if product else '' }}"
+                                    required
+                                >
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Discount Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number"
-                                       class="form-control"
-                                       name="discount_price"
-                                       step="0.01"
-                                       value="{{ product.discount_price if product }}">
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    name="discount_price"
+                                    step="0.01"
+                                    value="{{ product.discount_price if product else '' }}"
+                                >
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control"
-                                  name="description"
-                                  rows="4">{{ product.description if product }}</textarea>
+                        <textarea
+                            class="form-control"
+                            name="description"
+                            rows="4"
+                        >{{ product.description if product else '' }}</textarea>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label">Stock Quantity</label>
-                            <input type="number"
-                                   class="form-control"
-                                   name="stock"
-                                   value="{{ product.stock if product }}"
-                                   required>
+                            <input
+                                type="number"
+                                class="form-control"
+                                name="stock"
+                                value="{{ product.stock if product else '' }}"
+                                required
+                            >
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="is_active">
-                                <option value="true" {% if product and product.is_active %}selected{% endif %}>
-                                    Active
-                                </option>
-                                <option value="false" {% if product and not product.is_active %}selected{% endif %}>
-                                    Inactive
-                                </option>
+                                <option value="true" {% if product and product.is_active %}selected{% endif %}>Active</option>
+                                <option value="false" {% if product and not product.is_active %}selected{% endif %}>Inactive</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- New Image Upload Field -->
+                    <div class="mb-4">
+                        <label for="image" class="form-label">Product Image</label>
+                        <input
+                            type="file"
+                            class="form-control"
+                            id="image"
+                            name="image"
+                            accept="image/*"
+                        >
                     </div>
 
                     <div class="d-grid">

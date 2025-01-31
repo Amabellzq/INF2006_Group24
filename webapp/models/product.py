@@ -1,6 +1,9 @@
 from datetime import datetime
 from webapp.extensions import db
 
+from datetime import datetime
+from webapp.extensions import db
+
 
 class Product(db.Model):
     __tablename__ = 'products'
@@ -10,7 +13,9 @@ class Product(db.Model):
     description = db.Column(db.Text)
     original_price = db.Column(db.Numeric(10, 2), nullable=False)
     discount_price = db.Column(db.Numeric(10, 2))
-    image_url = db.Column(db.String(500))
+
+    # Store the raw image data here
+    image_data = db.Column(db.LargeBinary(length=(2 ** 24 - 1)))
     stock = db.Column(db.Integer, default=0, nullable=False)
     is_flash_sale = db.Column(db.Boolean, default=False)
     flash_sale_start = db.Column(db.DateTime)

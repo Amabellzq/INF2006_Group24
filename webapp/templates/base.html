@@ -35,17 +35,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <!-- Left Nav -->
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="/products">Deals</a></li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              Categories
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Beauty</a></li>
-              <li><a class="dropdown-item" href="#">Massage</a></li>
-              <li><a class="dropdown-item" href="#">Fitness</a></li>
-            </ul>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="/products">All Deals</a></li>
           <li class="nav-item"><a class="nav-link" href="/flash-sale">Flash Sales</a></li>
         </ul>
 
@@ -54,14 +44,16 @@
           <input class="form-control rounded-pill" type="search" placeholder="Search deals...">
         </form>
 
-        <!-- Right Nav (User Actions) -->
-        <ul class="navbar-nav">
-          {% if current_user.is_authenticated %}
+                <!-- Right Nav (User Actions) -->
+          <ul class="navbar-nav">
+        {% if current_user.is_authenticated %}
+          {% if current_user.role != 'admin' %}
           <li class="nav-item">
             <a class="nav-link" href="/cart">
               <i class="fas fa-shopping-cart"></i>
             </a>
           </li>
+          {% endif %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
               <i class="fas fa-user-circle"></i>
@@ -72,10 +64,11 @@
               <li><a class="dropdown-item" href="/logout">Logout</a></li>
             </ul>
           </li>
-          {% else %}
+        {% else %}
           <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
           <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
-          {% endif %}
+{% endif %}
+
         </ul>
       </div>
     </div>
@@ -86,10 +79,11 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+          {% set alert_class = 'danger' if category == 'error' else category %}
+          <div class="alert alert-{{ alert_class }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}

@@ -42,7 +42,7 @@ def register():
         # Print the validation error to the console
         # Optionally, print entire stack trace:
         # traceback.print_exc()
-        flash(e.messages, 'failed')
+        flash(e.messages, 'error')
 
         return render_template('login.html', error=e.messages)
 
@@ -56,7 +56,7 @@ def register():
 
         # Optionally, you could just print the error message:
         # print("Error:", str(e))
-        flash(str(e), 'failed')
+        flash(str(e), 'error')
         return render_template('home.html', error=str(e))
 
 
@@ -79,14 +79,20 @@ def login():
         db.session.commit()
 
         flash('Logged in successfully!', 'success')
-        return redirect(url_for('main.home'))  # Redirect to the home page
+
+        # Redirect based on role
+        if user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        else:
+            return redirect(url_for('main.home'))
 
     except ValidationError as e:
-        flash(e.messages, 'failed')
+        flash(e.messages, 'error')
         return render_template('login.html', error=e.messages)
     except Exception as e:
-        flash(str(e), 'failed')
+        flash(str(e), 'error')
         return render_template('login.html', error=str(e))
+
 
 @auth_bp.route('/logout')
 def logout():
