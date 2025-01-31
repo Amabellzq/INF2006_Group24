@@ -22,7 +22,6 @@ class User(db.Model):
     }
 
     # Relationships
-    cart = db.relationship('Cart', back_populates='user', uselist=False, cascade='all, delete')
     orders = db.relationship('Order', back_populates='user', cascade='all, delete')
 
     __table_args__ = (

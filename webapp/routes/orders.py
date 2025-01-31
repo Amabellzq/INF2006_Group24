@@ -1,6 +1,6 @@
 # webapp/routes/orders.py
 from flask import Blueprint, request, session, render_template, redirect, url_for
-from webapp.models import Order, OrderItem, Cart, CartItem, Product, order
+from webapp.models import Order
 from webapp.extensions import db
 
 order_bp = Blueprint('orders', __name__)
@@ -21,4 +21,6 @@ def order_detail(order_id):
     if order.user_id != session.get('user_id') and session.get('role') != 'admin':
         return redirect(url_for('home'))
     return render_template('order_detail.html', order=order)
+
+
 

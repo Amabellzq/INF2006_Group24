@@ -63,23 +63,6 @@ class RegisterSchema(Schema):
             raise ValidationError("Passwords must match.", field_name="confirm_password")
 
 
-class CartItemSchema(Schema):
-    product_id = fields.Int(required=True)
-    quantity = fields.Int(
-        required=True,
-        validate=validate.Range(min=1, max=100)
-    )
-    product_version = fields.Int(required=True)
-
-
-class OrderSchema(Schema):
-    items = fields.Nested(
-        CartItemSchema,
-        many=True,
-        required=True,
-        validate=validate.Length(min=1)
-    )
-
 
 class LoginSchema(Schema):
     """Schema used exclusively for the login form.

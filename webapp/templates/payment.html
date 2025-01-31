@@ -1,6 +1,4 @@
-<!-- templates/payment.html -->
 {% extends "base.html" %}
-
 {% block title %}Payment{% endblock %}
 
 {% block content %}
@@ -16,14 +14,21 @@
                         <div class="card border-primary">
                             <div class="card-body">
                                 <h5 class="card-title">Order Summary</h5>
+
+                                <!-- Product Image -->
+                                <div class="text-center mb-3">
+                                    <img src="{{ url_for('products.product_image', product_id=product.id) }}"
+                                         alt="{{ product.name }}"
+                                         class="img-fluid rounded shadow-sm"
+                                         style="max-height: 200px;">
+                                </div>
+
                                 <ul class="list-unstyled">
-                                    <li class="d-flex justify-content-between mb-2">
-                                        <span>Items:</span>
-                                        <span>{{ order.items|length }}</span>
+                                    <li class="mb-2">
+                                        <strong>Product:</strong> {{ product.name }}
                                     </li>
-                                    <li class="d-flex justify-content-between mb-2">
-                                        <span>Total:</span>
-                                        <span>${{ order.total_amount }}</span>
+                                    <li class="mb-2">
+                                        <strong>Price:</strong> ${{ "%.2f"|format(price) }}
                                     </li>
                                 </ul>
                             </div>
@@ -32,40 +37,56 @@
 
                     <!-- Payment Form -->
                     <div class="col-md-7">
-                        <form method="POST" action="{{ url_for('orders.process_payment') }}">
+                        <form method="POST" action="{{ url_for('payment.process_payment', product_id=product.id) }}">
+                            {{ form.hidden_tag() }}
+
                             <div class="mb-3">
-                                <label class="form-label">Card Number</label>
+                                {{ form.card_number.label(class="form-label") }}
                                 <input type="text"
                                        class="form-control"
+                                       id="card_number"
                                        name="card_number"
-                                       placeholder="4242 4242 4242 4242"
+                                       placeholder="Enter your card number"
+                                       maxlength="19"
                                        required>
+                                {% for error in form.card_number.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
                             </div>
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Expiration Date</label>
+                                    {{ form.exp_date.label(class="form-label") }}
                                     <input type="text"
                                            class="form-control"
+                                           id="exp_date"
                                            name="exp_date"
                                            placeholder="MM/YY"
+                                           maxlength="5"
                                            required>
+                                    {% for error in form.exp_date.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
+
                                 <div class="col-md-6">
-                                    <label class="form-label">CVC</label>
+                                    {{ form.cvc.label(class="form-label") }}
                                     <input type="text"
                                            class="form-control"
+                                           id="cvc"
                                            name="cvc"
-                                           placeholder="123"
+                                           placeholder="CVC"
+                                           maxlength="3"
+                                           pattern="\d{3}"
                                            required>
+                                    {% for error in form.cvc.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit"
-                                        class="btn btn-primary btn-lg">
-                                    Pay ${{ order.total_amount }}
-                                </button>
+                                {{ form.submit(class="btn btn-primary btn-lg") }}
                             </div>
                         </form>
                     </div>
@@ -74,4 +95,29 @@
         </div>
     </div>
 </div>
+
+<!-- JavaScript for Input Formatting -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cardNumberInput = document.getElementById("card_number");
+    const expDateInput = document.getElementById("exp_date");
+
+    // Format Card Number: XXXX XXXX XXXX XXXX
+    cardNumberInput.addEventListener("input", function (e) {
+        let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+        value = value.substring(0, 16); // Limit to 16 digits
+        value = value.replace(/(\d{4})/g, "$1 ").trim(); // Add space every 4 digits
+        e.target.value = value;
+    });
+
+    // Format Expiry Date: MM/YY
+    expDateInput.addEventListener("input", function (e) {
+        let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+        if (value.length > 4) value = value.substring(0, 4); // Limit to 4 characters
+        if (value.length >= 2) value = value.replace(/^(\d{2})/, "$1/"); // Insert slash
+        e.target.value = value;
+    });
+});
+</script>
+
 {% endblock %}

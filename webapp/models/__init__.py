@@ -1,10 +1,8 @@
 # webapp/models/__init__.py
 from .user import User
 from .product import Product
-from .cart import Cart, CartItem
-from .order import Order, OrderItem
+from .order import Order
 
 __all__ = [
-    'User', 'Product', 'Cart',
-    'CartItem', 'Order', 'OrderItem'
+    'User', 'Product', 'Order'
 ]

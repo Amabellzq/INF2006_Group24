@@ -40,7 +40,6 @@ def create_app(config_class=Config):
     from webapp.routes.products import product_bp
     from webapp.routes.orders import order_bp
     from webapp.routes.admin import admin_bp
-    from webapp.routes.cart import cart_bp
     from webapp.routes.payment import payment_bp
     from webapp.routes.main import main_bp
 
@@ -49,7 +48,6 @@ def create_app(config_class=Config):
     app.register_blueprint(product_bp)
     app.register_blueprint(order_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(cart_bp)
     app.register_blueprint(payment_bp)
 
     # Create database tables (Dev only)

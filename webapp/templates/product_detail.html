@@ -51,9 +51,12 @@
 
         <div class="mb-4">
             <div class="d-flex gap-2 mb-3">
-                <button class="btn btn-primary btn-lg flex-grow-1">
-                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                </button>
+                <!-- In product.html -->
+                <form action="{{ url_for('payment.payment_page', product_id=product.id) }}" method="POST">
+                    <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                        <i class="fas fa-cart-plus me-2"></i>Purchase Now
+                    </button>
+                </form>
             </div>
         </div>
 

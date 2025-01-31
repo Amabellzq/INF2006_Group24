@@ -23,8 +23,6 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    cart_items = db.relationship('CartItem', back_populates='product')
 
     def __repr__(self):
         return f'<Product {self.name}>'

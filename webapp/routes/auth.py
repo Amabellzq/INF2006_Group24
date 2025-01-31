@@ -4,7 +4,6 @@ from flask import Blueprint, request, render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, current_user
 from webapp.extensions import db
 from webapp.models.user import User
-from webapp.models.cart import Cart
 from webapp.schemas import RegisterSchema, LoginSchema
 from datetime import datetime
 from marshmallow import ValidationError
@@ -29,10 +28,8 @@ def register():
 
         user = User(email=data['email'], role='user')  # Default role is 'user'
         user.set_password(data['password'])
-        cart = Cart(user=user)
 
         db.session.add(user)
-        db.session.add(cart)
         db.session.commit()
 
         flash('Registration successful! Please log in.', 'success')
