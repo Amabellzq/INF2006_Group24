@@ -22,13 +22,16 @@ def payment_page(product_id):
     return render_template('payment.html', product=product, price=price, form=form)
 
 
+from flask import request  # Ensure request is imported
+
 @payment_bp.route('/process_payment/<int:product_id>', methods=['POST'])
 @login_required
 def process_payment(product_id):
     """Process payment and ensure ACID compliance."""
     product = Product.query.get_or_404(product_id)
     price = product.discount_price or product.original_price
-    form = PaymentForm()
+
+    form = PaymentForm(request.form)  # Ensure form data is passed from POST request
 
     if form.validate_on_submit():
         try:
@@ -52,6 +55,10 @@ def process_payment(product_id):
             flash("An error occurred while processing the payment.", "error")
             return redirect(url_for('payment.payment_page', product_id=product_id))
 
-    flash("Invalid payment details. Please check your input.", "error")
+    # 🔹 Capture Validation Errors
+    errors = [f"{field}: {', '.join(error)}" for field, error in form.errors.items()]
+    flash(f"Invalid payment details: {' | '.join(errors)}", "error")
+
     return redirect(url_for('payment.payment_page', product_id=product_id))
+
 

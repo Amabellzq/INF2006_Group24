@@ -31,20 +31,38 @@ class ProductForm(FlaskForm):
 
 
 
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired, Length, Regexp
+
 class PaymentForm(FlaskForm):
-    card_number = StringField('Card Number',
-                              validators=[DataRequired(),
-                                          Length(min=16, max=16, message="Card number must be exactly 16 digits"),
-                                          Regexp(r'^\d{16}$', message="Card number must contain only digits")])
+    card_number = StringField(
+        'Card Number',
+        validators=[
+            DataRequired(),
+            Length(min=19, max=19, message="Card number must be in format XXXX XXXX XXXX XXXX"),
+            Regexp(r'^\d{4} \d{4} \d{4} \d{4}$', message="Invalid card format. Use XXXX XXXX XXXX XXXX")
+        ]
+    )
 
-    exp_date = StringField('Expiration Date',
-                           validators=[DataRequired(),
-                                       Regexp(r'^(0[1-9]|1[0-2])\/\d{2}$', message="Expiration date must be MM/YY")])
+    exp_date = StringField(
+        'Expiration Date',
+        validators=[
+            DataRequired(),
+            Length(min=5, max=5, message="Expiration date must be MM/YY"),
+            Regexp(r'^(0[1-9]|1[0-2])/\d{2}$', message="Invalid format. Use MM/YY")
+        ]
+    )
 
-    cvc = StringField('CVC',
-                      validators=[DataRequired(),
-                                  Length(min=3, max=3, message="CVC must be 3 digits"),
-                                  Regexp(r'^\d{3}$', message="CVC must contain only digits")])
+    cvc = StringField(
+        'CVC',
+        validators=[
+            DataRequired(),
+            Length(min=3, max=3, message="CVC must be exactly 3 digits"),
+            Regexp(r'^\d{3}$', message="CVC must contain only digits")
+        ]
+    )
 
     submit = SubmitField('Pay Now')
+
 
