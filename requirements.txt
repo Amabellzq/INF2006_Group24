@@ -1,0 +1,11 @@
+# requirements.txt
+flask==3.1.0
+flask-sqlalchemy==3.1.1
+flask-migrate==4.1.0
+flask-marshmallow==1.3.0
+marshmallow-sqlalchemy==1.4.0
+mysqlclient==2.2.7
+python-dotenv==1.0.1
+sqlalchemy==2.0.37
+Flask-WTF==1.2.2
+Flask-Login==0.6.3

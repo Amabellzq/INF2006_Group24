@@ -1,0 +1,77 @@
+<!-- templates/payment.html -->
+{% extends "base.html" %}
+
+{% block title %}Payment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h2 class="card-title mb-4">Payment Information</h2>
+
+                <div class="row g-3">
+                    <!-- Order Summary -->
+                    <div class="col-md-5">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Order Summary</h5>
+                                <ul class="list-unstyled">
+                                    <li class="d-flex justify-content-between mb-2">
+                                        <span>Items:</span>
+                                        <span>{{ order.items|length }}</span>
+                                    </li>
+                                    <li class="d-flex justify-content-between mb-2">
+                                        <span>Total:</span>
+                                        <span>${{ order.total_amount }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <div class="col-md-7">
+                        <form method="POST" action="{{ url_for('orders.process_payment') }}">
+                            <div class="mb-3">
+                                <label class="form-label">Card Number</label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="card_number"
+                                       placeholder="4242 4242 4242 4242"
+                                       required>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Expiration Date</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           name="exp_date"
+                                           placeholder="MM/YY"
+                                           required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">CVC</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           name="cvc"
+                                           placeholder="123"
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit"
+                                        class="btn btn-primary btn-lg">
+                                    Pay ${{ order.total_amount }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

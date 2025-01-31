@@ -1,0 +1,67 @@
+<!-- templates/product_list.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>All Deals</h1>
+    <form class="d-flex" method="GET" action="{{ url_for('products.get_products') }}">
+        <input class="form-control me-2" type="search" name="search" placeholder="Search deals...">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for product in products.items %}
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+            {% if product.is_flash_sale %}
+            <div class="badge bg-danger position-absolute top-0 start-0 m-2">Flash Sale</div>
+            {% endif %}
+            <img src="{{ product.image_url }}"
+                 class="card-img-top"
+                 style="height: 200px; object-fit: cover;"
+                 alt="{{ product.name }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text text-muted">{{ product.description|truncate(100) }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <s class="text-muted">${{ product.original_price }}</s>
+                        <span class="fs-4 text-danger ms-2">${{ product.current_price }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('products.get_product', product_id=product.id) }}"
+                   class="btn btn-primary w-100">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if products.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ products.prev_num }}">Previous</a>
+        </li>
+        {% endif %}
+
+        {% for page_num in products.iter_pages() %}
+        <li class="page-item {% if page_num == products.page %}active{% endif %}">
+            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if products.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ products.next_num }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}
