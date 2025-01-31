@@ -2,6 +2,8 @@
 
 VoucherHub is a Flask-based e-commerce platform enabling users to discover deals, complete purchases, and manage orders. This document provides comprehensive guidance for local setup and MySQL database integration.
 
+**Note: Admin Role have to be manually edit on Workbench to role "admin"**
+
 ---
 
 ## 🛠 Prerequisites
