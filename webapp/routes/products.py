@@ -8,26 +8,8 @@ product_bp = Blueprint('products', __name__)
 
 @product_bp.route('/products')
 def product_list():
-    search = request.args.get('search', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-
-    query = Product.query
-    if search:
-        query = query.filter(
-            or_(
-                Product.name.ilike(f'%{search}%'),
-                Product.description.ilike(f'%{search}%')
-            )
-        )
-
-    pagination = query.paginate(page=page, per_page=per_page)
-    return render_template(
-        'product_list.html',
-        products=pagination.items,
-        pagination=pagination,
-        search=search
-    )
+    products = Product.query.all()
+    return render_template('product_list.html', products=products)
 
 @product_bp.route('/products/<int:product_id>')
 def product_detail(product_id):

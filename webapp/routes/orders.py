@@ -22,12 +22,3 @@ def order_detail(order_id):
         return redirect(url_for('home'))
     return render_template('order_detail.html', order=order)
 
-
-@order_bp.route('/checkout', methods=['POST'])
-def checkout():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
-
-    # Existing checkout logic here...
-    # After successful checkout:
-    return redirect(url_for('orders.order_detail', order_id=order.id))

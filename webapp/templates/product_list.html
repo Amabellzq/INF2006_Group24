@@ -1,67 +1,99 @@
-<!-- templates/product_list.html -->
 {% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>All Deals</h1>
-    <form class="d-flex" method="GET" action="{{ url_for('products.get_products') }}">
-        <input class="form-control me-2" type="search" name="search" placeholder="Search deals...">
-        <button class="btn btn-outline-primary" type="submit">Search</button>
-    </form>
+<div class="mb-4">
+  <h1 class="mb-3">All Deals</h1>
+
+  <!-- "Mega Card" with search button -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="GET" action="{{ url_for('admin.dashboard') }}" class="row g-3 align-items-center">
+        <div class="col-auto">
+          <input
+            type="text"
+            name="search"
+            value="{{ request.args.get('search', '') }}"
+            class="form-control"
+            placeholder="Search product..."
+          >
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-secondary">
+            <i class="fas fa-search me-1"></i>Search
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for product in products.items %}
+{% if products|length == 0 %}
+  <div class="alert alert-info text-center">
+    <i class="fas fa-info-circle me-2"></i>No Listed Product
+  </div>
+{% else %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for product in products %}
     <div class="col">
-        <div class="card h-100 border-0 shadow-sm">
-            {% if product.is_flash_sale %}
-            <div class="badge bg-danger position-absolute top-0 start-0 m-2">Flash Sale</div>
-            {% endif %}
-            <img src="{{ product.image_url }}"
-                 class="card-img-top"
-                 style="height: 200px; object-fit: cover;"
-                 alt="{{ product.name }}">
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text text-muted">{{ product.description|truncate(100) }}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <s class="text-muted">${{ product.original_price }}</s>
-                        <span class="fs-4 text-danger ms-2">${{ product.current_price }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer bg-white">
-                <a href="{{ url_for('products.get_product', product_id=product.id) }}"
-                   class="btn btn-primary w-100">
-                    View Details
-                </a>
-            </div>
+      <div class="card h-100 shadow-sm">
+        <!-- Product image (BLOB or placeholder) -->
+        {% if product.image_data %}
+          <img
+            src="{{ url_for('admin.product_image', product_id=product.id) }}"
+            class="card-img-top"
+            alt="{{ product.name }}"
+          >
+        {% else %}
+          <img
+            src="https://via.placeholder.com/400x300?text=No+Image"
+            class="card-img-top"
+            alt="{{ product.name }}"
+          >
+        {% endif %}
+
+        <div class="card-body">
+          <h5 class="card-title">{{ product.name }}</h5>
+          <p class="card-text text-muted">
+            {{ product.description|truncate(100) }}
+          </p>
+
+          {% if product.discount_price %}
+            <!-- Original price struck through, discount in bold red -->
+            <span class="text-secondary text-decoration-line-through me-2">
+              ${{ product.original_price }}
+            </span>
+            <span class="text-danger fw-bold">
+              ${{ product.discount_price }}
+            </span>
+          {% else %}
+            <!-- No discount price, just show the original price -->
+            <span class="fw-bold">
+              ${{ product.original_price }}
+            </span>
+          {% endif %}
         </div>
+
+        <div class="card-footer d-flex gap-2">
+          <!-- "View Details" (Admin Edit) -->
+          <a
+            href="{{ url_for('admin.edit_product', product_id=product.id) }}"
+            class="btn btn-sm btn-primary flex-fill text-center"
+          >
+            <i class="fas fa-edit me-1"></i>View Details
+          </a>
+
+          <!-- "Purchase" (redirects to payment) -->
+          <a
+            href="{{ url_for('payment.payment') }}"
+            class="btn btn-sm btn-success flex-fill text-center"
+          >
+            <i class="fas fa-shopping-cart me-1"></i>Purchase
+          </a>
+        </div>
+      </div>
     </div>
     {% endfor %}
-</div>
-
-<!-- Pagination -->
-<nav class="mt-5">
-    <ul class="pagination justify-content-center">
-        {% if products.has_prev %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ products.prev_num }}">Previous</a>
-        </li>
-        {% endif %}
-
-        {% for page_num in products.iter_pages() %}
-        <li class="page-item {% if page_num == products.page %}active{% endif %}">
-            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
-        </li>
-        {% endfor %}
-
-        {% if products.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ products.next_num }}">Next</a>
-        </li>
-        {% endif %}
-    </ul>
-</nav>
+  </div>
+{% endif %}
 {% endblock %}
