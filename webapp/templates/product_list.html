@@ -5,18 +5,12 @@
 <div class="mb-4">
   <h1 class="mb-3">All Deals</h1>
 
-  <!-- "Mega Card" with search button -->
   <div class="card shadow-sm">
     <div class="card-body">
       <form method="GET" action="{{ url_for('products.product_list') }}" class="row g-3 align-items-center">
         <div class="col-auto">
-          <input
-            type="text"
-            name="search"
-            value="{{ request.args.get('search', '') }}"
-            class="form-control"
-            placeholder="Search product..."
-          >
+          <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+                 class="form-control" placeholder="Search product...">
         </div>
         <div class="col-auto">
           <button type="submit" class="btn btn-secondary">
@@ -39,27 +33,18 @@
       <div class="card h-100 shadow-sm">
         <!-- Product image (BLOB or placeholder) -->
         {% if product.image_data %}
-          <img
-            src="{{ url_for('products.product_image', product_id=product.id) }}"
-            class="card-img-top"
-            alt="{{ product.name }}"
-          >
+          <img src="{{ url_for('products.product_image', product_id=product.id) }}"
+               class="card-img-top" alt="{{ product.name }}">
         {% else %}
-          <img
-            src="https://via.placeholder.com/400x300?text=No+Image"
-            class="card-img-top"
-            alt="{{ product.name }}"
-          >
+          <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top"
+               alt="{{ product.name }}">
         {% endif %}
 
         <div class="card-body">
           <h5 class="card-title">{{ product.name }}</h5>
-          <p class="card-text text-muted">
-            {{ product.description|truncate(100) }}
-          </p>
+          <p class="card-text text-muted">{{ product.description|truncate(100) }}</p>
 
           {% if product.discount_price %}
-            <!-- Original price struck through, discount in bold red -->
             <span class="text-secondary text-decoration-line-through me-2">
               ${{ product.original_price }}
             </span>
@@ -67,7 +52,6 @@
               ${{ product.discount_price }}
             </span>
           {% else %}
-            <!-- No discount price, just show the original price -->
             <span class="fw-bold">
               ${{ product.original_price }}
             </span>
@@ -75,20 +59,26 @@
         </div>
 
         <div class="card-footer d-flex gap-2">
-          <!-- "View Details" (Admin Edit) -->
-             <a
-            href="{{ url_for('products.product_detail', product_id=product.id) }}"
-            class="btn btn-sm btn-primary flex-fill text-center"
-          >
-            <i class="fas fa-eye me-1"></i>View Details
+          <!-- "View Details" Button -->
+          <a href="{{ url_for('products.product_detail', product_id=product.id) }}"
+             class="btn btn-lg btn-primary flex-fill text-center d-flex align-items-center justify-content-center">
+            <i class="fas fa-eye me-2"></i> View Details
           </a>
 
-            <form action="{{ url_for('payment.payment_page', product_id=product.id) }}" method="POST">
-                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
-                    <i class="fas fa-cart-plus me-2"></i>Purchase Now
-                </button>
-            </form>
+          <!-- "Purchase Now" Button -->
+          {% if current_user.role == 'admin' %}
+            <button class="btn btn-lg btn-secondary flex-fill text-center d-flex align-items-center justify-content-center"
+                    disabled data-bs-toggle="tooltip" title="Admins cannot purchase products.">
+              <i class="fas fa-cart-plus me-2"></i> Purchase Now
+            </button>
+          {% else %}
+            <a href="{{ url_for('payment.payment_page', product_id=product.id) }}"
+               class="btn btn-lg btn-primary flex-fill text-center d-flex align-items-center justify-content-center">
+              <i class="fas fa-cart-plus me-2"></i> Purchase Now
+            </a>
+          {% endif %}
         </div>
+
       </div>
     </div>
     {% endfor %}
