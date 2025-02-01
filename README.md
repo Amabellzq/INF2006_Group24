@@ -45,6 +45,14 @@ Execute the following SQL command:
 ```bash
 CREATE DATABASE voucherhub;
 ```
+**Note: `caching_sha2_password` may have some connection issue with SQLAlchemy+PyMySQL, change to `mysql_native_password` instead  **
+```bash
+ALTER USER 'root'@'localhost'
+IDENTIFIED WITH mysql_native_password
+BY 'yourRootPassword';
+FLUSH PRIVILEGES;
+
+```
 ### Environment Configuration
 Place the .env on project's root directory
 ```bash
