@@ -74,6 +74,7 @@ def edit_product(product_id):
     """Edit an existing product (Admin Only)."""
     # Only admins can edit products
     if current_user.role != 'admin':
+        flash("Unauthorized access!", "error")
         return redirect(url_for('main.home'))
 
     product = Product.query.get_or_404(product_id)
@@ -94,6 +95,11 @@ def edit_product(product_id):
         except Exception as e:
             db.session.rollback()
             flash(f"An error occurred: {str(e)}", "error")
+
+    if form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {field}: {error}", "error")
 
     return render_template('admin_crud.html', form=form, product=product)
 

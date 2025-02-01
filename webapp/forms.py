@@ -1,11 +1,10 @@
 # webapp/forms.py
-from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, TextAreaField, DecimalField, IntegerField
-from wtforms.validators import DataRequired, NumberRange, Optional
+from wtforms import TextAreaField, DecimalField, IntegerField
+from wtforms.validators import NumberRange, Optional, DataRequired, Length, Regexp, InputRequired
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp
+
 
 class ProductForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired()])
@@ -19,7 +18,7 @@ class ProductForm(FlaskForm):
         NumberRange(min=0.01)
     ])
     stock = IntegerField('Stock Quantity', validators=[
-        DataRequired(),
+        InputRequired(),
         NumberRange(min=0)
     ])
 
@@ -27,13 +26,6 @@ class ProductForm(FlaskForm):
     image = FileField('Product Image', validators=[
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files are allowed!')
     ])
-
-
-
-
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp
 
 class PaymentForm(FlaskForm):
     card_number = StringField(

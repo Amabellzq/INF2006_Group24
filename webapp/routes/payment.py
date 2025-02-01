@@ -36,6 +36,8 @@ def process_payment(product_id):
     if form.validate_on_submit():
         try:
             with db.session.begin_nested():  # Maintain ACID properties
+
+                product.stock -= 1
                 new_order = Order(
                     user_id=current_user.id,
                     product_id=product.id,

@@ -44,17 +44,21 @@
           <h5 class="card-title">{{ product.name }}</h5>
           <p class="card-text text-muted">{{ product.description|truncate(100) }}</p>
 
-          {% if product.discount_price %}
-            <span class="text-secondary text-decoration-line-through me-2">
-              ${{ product.original_price }}
-            </span>
-            <span class="text-danger fw-bold">
-              ${{ product.discount_price }}
-            </span>
+          {% if product.stock > 0 %}
+              {% if product.discount_price %}
+                <span class="text-secondary text-decoration-line-through me-2">
+                  ${{ product.original_price }}
+                </span>
+                <span class="text-danger fw-bold">
+                  ${{ product.discount_price }}
+                </span>
+              {% else %}
+                <span class="fw-bold">
+                  ${{ product.original_price }}
+                </span>
+              {% endif %}
           {% else %}
-            <span class="fw-bold">
-              ${{ product.original_price }}
-            </span>
+              <span class="text-danger fw-bold">SOLD OUT</span>
           {% endif %}
         </div>
 
@@ -71,11 +75,16 @@
                     disabled data-bs-toggle="tooltip" title="Admins cannot purchase products.">
               <i class="fas fa-cart-plus me-2"></i> Purchase Now
             </button>
-          {% else %}
+          {% elif product.stock > 0 %}
             <a href="{{ url_for('payment.payment_page', product_id=product.id) }}"
                class="btn btn-lg btn-primary flex-fill text-center d-flex align-items-center justify-content-center">
               <i class="fas fa-cart-plus me-2"></i> Purchase Now
             </a>
+          {% else %}
+            <button class="btn btn-lg btn-secondary flex-fill text-center d-flex align-items-center justify-content-center"
+                    disabled>
+              <i class="fas fa-ban me-2"></i> SOLD OUT
+            </button>
           {% endif %}
         </div>
 
