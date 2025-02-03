@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <!-- Outer gray background -->
+    <div class="bg-light p-4 rounded shadow-lg text-center" style="max-width: 900px; width: 100%;">
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='css/media/BannerAbout.png') }}" alt="About Us" class="img-fluid rounded">
+        </div>
+
+        <div class="mt-4 px-4">
+            <h2 class="fw-bold">About Us</h2>
+            <p class="text-muted">
+                VoucherHub. was founded in 2008 and launched to bring the unique concept of choice in gifting to Singapore.
+            </p>
+            <p class="text-muted">
+                By enabling you to give the gift of choice, we improve the gifting experience – both for the recipient as well as the giver.
+            </p>
+            <p class="text-muted">
+                Our commitment is seen in our dedicated team, which works with our network of over 200 hand-picked service partners to bring to you the best gift experiences at the best value.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

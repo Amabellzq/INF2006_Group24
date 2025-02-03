@@ -18,3 +18,112 @@
 .bg-gradient-primary {
     background-image: linear-gradient(to right, #6366f1, #8b5cf6);
 }
+
+/* Navbar Styling */
+.navbar {
+    background-color: #ffffff;
+    padding: 15px 0;
+}
+
+/* Brand */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: black;
+}
+
+/* Centered Links */
+.navbar-nav.mx-auto .nav-link {
+    font-size: 1rem;
+    color: black;
+    margin: 0 15px;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav.mx-auto .nav-link:hover {
+    color: #007bff;
+}
+
+/* Right-Aligned Search Bar */
+.search-bar {
+    width: 250px;
+}
+
+.search-bar .form-control {
+    border-radius: 50px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-shadow: none;
+}
+
+/* Right-Aligned Login/Register */
+.navbar-nav.ms-3 .nav-link {
+    color: black;
+    margin-left: 15px;
+}
+
+.navbar-nav.ms-3 .nav-link:hover {
+    color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar-nav.mx-auto {
+        text-align: center;
+    }
+
+    .search-bar {
+        width: 100%;
+    }
+}
+
+/* Hero Image */
+.hero-image {
+    max-width: 115%;  /* Ensures it fits within the column */
+    height: auto;     /* Maintains aspect ratio */
+    display: block;
+    margin: 0 auto;
+}
+
+/* Search Modal */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent black */
+    backdrop-filter: blur(8px); /* Blur effect */
+}
+
+/* Auto-sizing modal */
+.custom-modal {
+    max-height: 90vh; /* Ensures the modal does not overflow */
+    overflow-y: auto; /* Enables scrolling if needed */
+}
+
+/* products list */
+.btn-sm-custom {
+    font-size: 14px; /* Smaller font */
+    padding: 8px 12px; /* Adjust padding */
+    white-space: nowrap; /* Prevents text from wrapping */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ABOUT PAGE */
+
+/* Style for About Page */
+.about-container {
+    max-width: 900px;
+    padding-top: 50px;    
+}
+
+.text-muted {
+    font-size: 1.0rem;
+    line-height: 1.3;
+}
+
+.img-fluid {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}

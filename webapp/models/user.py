@@ -11,7 +11,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.Enum('user', 'admin'), default='user', nullable=False)
+    role = db.Column(db.Enum('user', 'admin'), default='admin', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     active = db.Column(db.Boolean, default=True, nullable=False)

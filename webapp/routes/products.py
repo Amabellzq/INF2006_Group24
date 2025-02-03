@@ -1,7 +1,7 @@
 # webapp/routes/products.py
 from io import BytesIO
 
-from flask import Blueprint, request, render_template, abort, send_file
+from flask import Blueprint, request, render_template, abort, send_file, jsonify, url_for
 from webapp.models.product import Product
 from datetime import datetime
 from sqlalchemy import or_
@@ -40,3 +40,34 @@ def flash_sale():
         Product.flash_sale_end >= now
     ).all()
     return render_template('product_list.html', products=products, flash_sale=True)
+
+@product_bp.route('/search')
+def search():
+    query = request.args.get('query', '').strip()
+
+    if not query:
+        return jsonify({"results": []})
+
+    # Perform a case-insensitive search on product name and description
+    products = Product.query.filter(
+        or_(
+            Product.name.ilike(f'%{query}%'),
+            Product.description.ilike(f'%{query}%')
+        )
+    ).all()
+
+    # Format the results for JSON response
+    results = [
+        {
+            "name": product.name,
+            "description": product.description,
+            "original_price": str(product.original_price),
+            "discount_price": str(product.discount_price) if product.discount_price else str(product.original_price),
+            "stock": product.stock,
+            "is_flash_deal": product.is_flash_sale,
+            "image": url_for('products.product_image', product_id=product.id),
+            "url": url_for('products.product_detail', product_id=product.id)
+        } for product in products
+    ]
+
+    return jsonify({"results": results})

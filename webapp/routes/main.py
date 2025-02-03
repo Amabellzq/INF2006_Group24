@@ -33,3 +33,7 @@ def home():
     ).order_by(Product.created_at.desc()).all()
 
     return render_template('home.html', flash_deals=flash_deals, products=products)
+
+@main_bp.route('/about')
+def about():
+    return render_template('about.html')
