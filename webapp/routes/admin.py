@@ -7,20 +7,37 @@ from webapp.extensions import db
 from webapp.models.product import Product
 from webapp.forms import ProductForm
 from io import BytesIO
+from sqlalchemy import or_  # ✅ Add this line
+
 
 
 admin_bp = Blueprint('admin', __name__)
 
+# @admin_bp.route('/admin')
+# @login_required
+# def dashboard():
+#     # Check if the current user is actually an admin
+#     if current_user.role != 'admin':
+#         return redirect(url_for('main.home'))  # Adjust if your home endpoint is different
+
+#     products = Product.query.all()
+#     return render_template('admin_dashboard.html', products=products)
+
 @admin_bp.route('/admin')
-@login_required
 def dashboard():
-    # Check if the current user is actually an admin
-    if current_user.role != 'admin':
-        return redirect(url_for('main.home'))  # Adjust if your home endpoint is different
+    search_query = request.args.get('search', '').strip()
 
-    products = Product.query.all()
-    return render_template('admin_dashboard.html', products=products)
+    if search_query:
+        products = Product.query.filter(
+            or_(
+                Product.name.ilike(f"%{search_query}%"),
+                Product.description.ilike(f"%{search_query}%")
+            )
+        ).all()
+    else:
+        products = Product.query.all()
 
+    return render_template('admin_dashboard.html', products=products, search_query=search_query)
 
 @admin_bp.route('/admin/products/new', methods=['GET', 'POST'])
 @login_required

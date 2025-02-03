@@ -33,75 +33,70 @@
   </div>
 </div>
 
-{% if products|length == 0 %}
-  <div class="alert alert-info text-center">
-    <i class="fas fa-info-circle me-2"></i>No Listed Product
-  </div>
-{% else %}
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {% for product in products %}
-    <div class="col">
-      <div class="card h-100 shadow-sm">
-        <!-- Product image (BLOB or placeholder) -->
-        {% if product.image_data %}
-          <!-- If there's a route serving the BLOB as an image: -->
-          <img
-            src="{{ url_for('admin.product_image', product_id=product.id) }}"
-            class="card-img-top"
-            alt="{{ product.name }}"
-          >
-        {% else %}
-          <img
-            src="https://via.placeholder.com/400x300?text=No+Image"
-            class="card-img-top"
-            alt="{{ product.name }}"
-          >
-        {% endif %}
-
-<!-- In the card-body section -->
-<div class="card-body">
-  <h5 class="card-title">{{ product.name }}</h5>
-  <p class="card-text text-muted">
-    {{ product.description|truncate(100) }}
-  </p>
-
-  {% if product.discount_price %}
-    <!-- Show both prices: original struck through in gray, discount in bold & colored -->
-    <span class="text-secondary text-decoration-line-through me-2">
-      ${{ product.original_price }}
-    </span>
-    <span class="text-danger fw-bold">
-      ${{ product.discount_price }}
-    </span>
+<!-- Product List Section -->
+<div id="productResults">
+  {% if products|length == 0 %}
+    <div class="alert alert-info text-center">
+      <i class="fas fa-info-circle me-2"></i>No Listed Product
+    </div>
   {% else %}
-    <!-- No discount price, just show the original price normally -->
-    <span class="fw-bold">
-      ${{ product.original_price }}
-    </span>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for product in products %}
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          {% if product.image_data %}
+            <img src="{{ url_for('admin.product_image', product_id=product.id) }}" class="card-img-top" alt="{{ product.name }}">
+          {% else %}
+            <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
+          {% endif %}
+
+          <div class="card-body">
+            <h5 class="card-title">{{ product.name }}</h5>
+            <p class="card-text text-muted">{{ product.description|truncate(100) }}</p>
+            {% if product.discount_price %}
+              <span class="text-secondary text-decoration-line-through me-2">${{ product.original_price }}</span>
+              <span class="text-danger fw-bold">${{ product.discount_price }}</span>
+            {% else %}
+              <span class="fw-bold">${{ product.original_price }}</span>
+            {% endif %}
+          </div>
+
+          <div class="card-footer d-flex gap-2">
+            <a href="{{ url_for('admin.edit_product', product_id=product.id) }}" class="btn btn-sm btn-primary flex-fill">
+              <i class="fas fa-edit me-1"></i>View Details
+            </a>
+
+            <form method="POST" action="{{ url_for('admin.delete_product', product_id=product.id) }}" class="flex-fill">
+              <button type="submit" class="btn btn-sm btn-danger w-100">
+                <i class="fas fa-trash-alt me-1"></i>Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   {% endif %}
 </div>
-<div class="card-footer d-flex gap-2">
-  <a
-    href="{{ url_for('admin.edit_product', product_id=product.id) }}"
-    class="btn btn-sm btn-primary flex-fill text-center"
-  >
-    <i class="fas fa-edit me-1"></i>View Details
-  </a>
 
-  <form
-    method="POST"
-    action="{{ url_for('admin.delete_product', product_id=product.id) }}"
-    class="flex-fill"
-  >
-    <button type="submit" class="btn btn-sm btn-danger w-100">
-      <i class="fas fa-trash-alt me-1"></i>Delete
-    </button>
-  </form>
-</div>
+<!-- JavaScript for AJAX Search -->
+<script>
+  document.getElementById("searchForm").addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent full page reload
 
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-{% endif %}
+      let query = document.getElementById("searchQuery").value.trim();
+      
+      fetch(`/admin/dashboard?search=${query}`, { method: "GET" })
+      .then(response => response.text())
+      .then(html => {
+          let parser = new DOMParser();
+          let doc = parser.parseFromString(html, "text/html");
+          let newResults = doc.getElementById("productResults").innerHTML;
+          
+          document.getElementById("productResults").innerHTML = newResults;
+      })
+      .catch(error => console.error("Error fetching search results:", error));
+  });
+</script>
+
 {% endblock %}
