@@ -17,10 +17,11 @@ class Config:
         f"/{os.getenv('DB_NAME',)}"
     )
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,
-        'max_overflow': 20,
-        'pool_recycle': 3600,
-        'pool_pre_ping': True
+        'pool_size': 20,        # ✅ Max number of persistent connections
+        'max_overflow': 10,     # ✅ Extra connections allowed in bursts
+        'pool_recycle': 1800,   # ✅ Recycles connections every 30 minutes
+        'pool_timeout': 15,     # ✅ Prevents app from hanging if pool is full
+        'pool_pre_ping': True   # ✅ Detects stale connections before using
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Flask
