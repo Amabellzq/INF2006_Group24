@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   flask_app:
     build: .
     container_name: flask_app
     restart: always
     env_file:
-      - .env
+      - .env  # ✅ Load AWS RDS credentials from .env
     ports:
       - "8000:8000"
     depends_on:
-      - nginx
+      - nginx  # ✅ Flask should only depend on Nginx now
     networks:
       - app_network
 
@@ -23,7 +21,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # ✅ Correct Nginx config path
     depends_on:
-      - flask_app
+      - flask_app  # ✅ Nginx should wait for Flask
     networks:
       - app_network
 
