@@ -1,4 +1,3 @@
-# webapp/__init__.py
 from flask import Flask
 from webapp.config import Config
 from webapp.extensions import db, migrate, cors, ma, login_manager
@@ -9,7 +8,6 @@ from webapp.errors import (
     handle_concurrent_update
 )
 from webapp.models import User
-
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -50,9 +48,9 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(payment_bp)
 
-    # Create database tables (Dev only)
-    with app.app_context():
-        if app.config.get('DEBUG'):
+    # Only create tables in **Development Mode**
+    if app.config['DEBUG']:
+        with app.app_context():
             db.create_all()
 
     return app
