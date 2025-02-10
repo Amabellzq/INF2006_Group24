@@ -20,10 +20,6 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Step 5: Copy the Flask app into the container
 COPY . .
 
-# Step 6: Create a non-root user for security
-RUN groupadd -r flask && useradd -r -g flask flask
-USER flask
-
 # Step 7: Expose Flask's port
 EXPOSE 8000
 
