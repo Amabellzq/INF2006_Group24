@@ -9,7 +9,7 @@ from webapp.forms import ProductForm
 from io import BytesIO
 from sqlalchemy import or_  # ✅ Add this line
 
-
+from webapp.utils.utils import admin_required
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -24,6 +24,7 @@ admin_bp = Blueprint('admin', __name__)
 #     return render_template('admin_dashboard.html', products=products)
 
 @admin_bp.route('/admin')
+@admin_required
 def dashboard():
     search_query = request.args.get('search', '').strip()
 
@@ -40,12 +41,8 @@ def dashboard():
     return render_template('admin_dashboard.html', products=products, search_query=search_query)
 
 @admin_bp.route('/admin/products/new', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def create_product():
-    # Only admins can create products
-    if current_user.role != 'admin':
-        return redirect(url_for('main.home'))
-
     form = ProductForm()
 
     if request.method == 'POST':
@@ -86,14 +83,9 @@ def create_product():
 
 
 @admin_bp.route('/admin/products/<int:product_id>', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def edit_product(product_id):
     """Edit an existing product (Admin Only)."""
-    # Only admins can edit products
-    if current_user.role != 'admin':
-        flash("Unauthorized access!", "error")
-        return redirect(url_for('main.home'))
-
     product = Product.query.get_or_404(product_id)
     form = ProductForm(obj=product)
 
@@ -122,11 +114,9 @@ def edit_product(product_id):
 
 
 @admin_bp.route('/admin/products/<int:product_id>/image')
-@login_required
+@admin_required
 def product_image(product_id):
     """Serves the product image from the BLOB column."""
-    if current_user.role != 'admin':
-        return redirect(url_for('main.home'))
 
     product = Product.query.get_or_404(product_id)
     if not product.image_data:
@@ -142,11 +132,9 @@ def product_image(product_id):
 
 
 @admin_bp.route('/admin/products/<int:product_id>/delete', methods=['POST'])
-@login_required
+@admin_required
 def delete_product(product_id):
     # Only admins can delete products
-    if current_user.role != 'admin':
-        return redirect(url_for('main.home'))
 
     product = Product.query.get_or_404(product_id)
     try:
