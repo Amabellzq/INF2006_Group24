@@ -93,3 +93,10 @@ flask run
 ```
 Access the application at:
 http://127.0.0.1:5000/
+
+###  Rebuild and Restart Containers
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
