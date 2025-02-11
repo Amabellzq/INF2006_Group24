@@ -11,13 +11,13 @@ class Config:
     # Core Flask settings
     SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')  # Security fallback
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
-    
+
     # AWS RDS Database Configuration
-    DB_USER = os.getenv('DB_USER', 'admin')  # RDS Master username
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'your_rds_password')
-    DB_HOST = os.getenv('DB_HOST', 'your-rds-endpoint.rds.amazonaws.com')  # AWS RDS endpoint
-    DB_PORT = os.getenv('DB_PORT', '3306')
-    DB_NAME = os.getenv('DB_NAME', 'ecommerce')
+    DB_USER = os.getenv('DB_USER')  # RDS Master username
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+    DB_HOST = os.getenv('DB_HOST')  # AWS RDS endpoint
+    DB_PORT = os.getenv('DB_PORT')
+    DB_NAME = os.getenv('DB_NAME')
 
     # SQLAlchemy Database URI for MySQL on AWS RDS
     SQLALCHEMY_DATABASE_URI = (
@@ -25,16 +25,16 @@ class Config:
     )
 
     # Ensure SSL handling for AWS RDS (if enabled)
-    if os.getenv('USE_SSL', 'false').lower() == 'true':
-        SQLALCHEMY_DATABASE_URI += "?ssl_verify_cert=false"
+    #if os.getenv('USE_SSL', 'false').lower() == 'true':
+    #    SQLALCHEMY_DATABASE_URI += "?ssl_verify_cert=false"
 
     # SQLAlchemy Engine Options (Optimized for AWS RDS)
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,         # Max 10 persistent connections
-        'max_overflow': 5,       # Allow up to 5 additional connections
-        'pool_recycle': 1800,    # Reset idle connections every 30 minutes
-        'pool_timeout': 15,      # Prevents app from hanging if pool is full
-        'pool_pre_ping': True    # Detects stale connections before using
+        'pool_size': 10,  # Max 10 persistent connections
+        'max_overflow': 5,  # Allow up to 5 additional connections
+        'pool_recycle': 1800,  # Reset idle connections every 30 minutes
+        'pool_timeout': 15,  # Prevents app from hanging if pool is full
+        'pool_pre_ping': True  # Detects stale connections before using
     }
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # Performance boost
@@ -55,11 +55,11 @@ class Config:
     CORS_SUPPORTS_CREDENTIALS = True  # Allow cookies in cross-origin requests
 
     # Logging Configuration for AWS EC2
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')  # Can be DEBUG, INFO, WARNING, ERROR
-    LOG_FILE = os.getenv('LOG_FILE', '/var/log/flask-app.log')  # Store logs in EC2
+    #LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')  # Can be DEBUG, INFO, WARNING, ERROR
+    #LOG_FILE = os.getenv('LOG_FILE', '/var/log/flask-app.log')  # Store logs in EC2
 
     # Gunicorn Worker Settings (For AWS EC2)
-    GUNICORN_WORKERS = int(os.getenv('GUNICORN_WORKERS', '3'))  # Default: 3 workers
+    #GUNICORN_WORKERS = int(os.getenv('GUNICORN_WORKERS', '3'))  # Default: 3 workers
 
 
 class DevelopmentConfig(Config):
@@ -76,4 +76,3 @@ class ProductionConfig(Config):
     SQLALCHEMY_ECHO = False  # Disable SQL logging for performance
     SESSION_COOKIE_SECURE = True  # Ensures cookies are sent only over HTTPS
     SESSION_COOKIE_SAMESITE = 'Strict'  # Prevents CSRF (Cross-Site Request Forgery)
-
