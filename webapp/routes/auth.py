@@ -71,7 +71,7 @@ def login():
             return render_template('login.html')
 
         # Log in the user using Flask-Login
-        login_user(user)
+        login_user(user, remember=True)
         user.last_login = datetime.utcnow()
         db.session.commit()
 
