@@ -32,6 +32,12 @@ from werkzeug.utils import secure_filename
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+### ✅ **GET: Render the Product Form (Create)**
+@admin_bp.route('/admin/products/new', methods=['GET'])
+@login_required
+def create_product_form():
+    form = ProductForm()
+    return render_template('admin_crud.html', form=form)
 
 @admin_bp.route('/admin/products/new', methods=['POST'])
 def create_product():
