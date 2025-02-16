@@ -25,32 +25,45 @@ s3_client = boto3.client(
 
 
 ### ✅ **GET: Render the Product Form (Create)**
+import logging
+from werkzeug.utils import secure_filename
+
+# ✅ Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 @admin_bp.route('/admin/products/new', methods=['POST'])
-@login_required
 def create_product():
-    form = ProductForm()  # Initialize form object
+    print("🔍 Request received at /admin/products/new")
 
     try:
-        # ✅ Manually Extract Data Instead of Using validate_on_submit()
+        # ✅ Extract Form Data
         name = request.form.get("name", "").strip()
         description = request.form.get("description", "").strip()
         original_price = request.form.get("original_price")
         discount_price = request.form.get("discount_price")
         stock = request.form.get("stock")
 
-        # ✅ Basic Validation to Prevent Empty Fields
-        if not name or not original_price or not stock:
-            flash("❌ Name, Original Price, and Stock are required fields.", "error")
-            return redirect(url_for('admin.create_product_form'))
+        print(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
 
-        # ✅ Convert Numeric Fields (Handle Invalid Inputs)
+        # ✅ Basic Validation
+        if not name or not original_price or not stock:
+            error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
+            print(error_msg)
+            flash(error_msg, "error")
+            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
+
+        # ✅ Convert Numeric Fields
         try:
             original_price = float(original_price)
             discount_price = float(discount_price) if discount_price else None
             stock = int(stock)
         except ValueError:
-            flash("❌ Invalid price or stock value. Ensure numbers are correct.", "error")
-            return redirect(url_for('admin.create_product_form'))
+            error_msg = "❌ Invalid price or stock value!"
+            print(error_msg)
+            flash(error_msg, "error")
+            return jsonify({"error": error_msg}), 400
 
         # ✅ Create Product Object
         product = Product(
@@ -61,42 +74,63 @@ def create_product():
             stock=stock
         )
 
+        print(f"✅ Product object created: {product}")
+
         # ✅ Handle Image Upload to S3
         image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
             s3_key = f"uploads/products/{filename}"
 
-            # ✅ Upload to S3 using VPC Endpoint
-            s3_client.upload_fileobj(
-                image_file,
-                S3_BUCKET,
-                s3_key,
-                ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
-            )
+            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
 
-            # ✅ Store the S3 URL in the database
-            product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+            # ✅ Validate File Type
+            allowed_extensions = {"jpg", "jpeg", "png"}
+            if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
+                error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
+                print(error_msg)
+                flash(error_msg, "error")
+                return jsonify({"error": error_msg}), 400
+
+            try:
+                # ✅ Upload File to S3
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                )
+
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+                print(f"✅ Image uploaded successfully: {product.image_url}")
+
+            except NoCredentialsError:
+                error_msg = "❌ AWS IAM Role not detected!"
+                print(error_msg)
+                flash(error_msg, "error")
+                return jsonify({"error": error_msg}), 403
+
+            except ClientError as e:
+                error_msg = f"❌ S3 Upload Error: {str(e)}"
+                print(error_msg)
+                flash(error_msg, "error")
+                return jsonify({"error": error_msg}), 500
 
         # ✅ Save Product to Database
         db.session.add(product)
         db.session.commit()
 
-        flash('✅ Product created successfully!', 'success')
-        return redirect(url_for('admin.dashboard'))
+        print("✅ Product created successfully and saved to database!")
+        flash("✅ Product created successfully!", "success")
 
-    except NoCredentialsError:
-        flash("❌ AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", "error")
-
-    except ClientError as e:
-        flash(f"❌ S3 Upload Error: {str(e)}", "error")
+        return jsonify({"message": "✅ Product created successfully!", "product": str(product)}), 201
 
     except Exception as e:
         db.session.rollback()
-        flash(f"❌ An error occurred: {str(e)}", "error")
-
-    return redirect(url_for('admin.create_product_form'))
-
+        error_msg = f"❌ Unexpected Error: {str(e)}"
+        print(error_msg)
+        flash(error_msg, "error")
+        return jsonify({"error": error_msg}), 500
 
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
