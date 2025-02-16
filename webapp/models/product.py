@@ -1,10 +1,6 @@
 from datetime import datetime
 from webapp.extensions import db
 
-from datetime import datetime
-from webapp.extensions import db
-
-
 class Product(db.Model):
     __tablename__ = 'products'
 
@@ -14,15 +10,15 @@ class Product(db.Model):
     original_price = db.Column(db.Numeric(10, 2), nullable=False)
     discount_price = db.Column(db.Numeric(10, 2))
 
-    # Store the raw image data here
-    image_data = db.Column(db.LargeBinary(length=(2 ** 24 - 1)))
+    # ✅ Replace BLOB storage with an S3 URL (Max length set to 1024 to handle long URLs)
+    image_url = db.Column(db.String(1024), nullable=True)
+
     stock = db.Column(db.Integer, default=0, nullable=False)
     is_flash_sale = db.Column(db.Boolean, default=False)
     flash_sale_start = db.Column(db.DateTime)
     flash_sale_end = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
 
     def __repr__(self):
         return f'<Product {self.name}>'

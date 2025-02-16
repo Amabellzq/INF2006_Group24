@@ -13,6 +13,7 @@ class Order(db.Model):
     status = db.Column(db.Enum('pending', 'paid', 'failed', 'refunded'), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
     user = db.relationship('User', back_populates='orders')
     product = db.relationship('Product', backref='orders')  # Establishes Product.orders
 

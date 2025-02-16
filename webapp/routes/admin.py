@@ -1,149 +1,181 @@
-# webapp/routes/admin.py
-from flask import Blueprint, render_template, redirect, url_for
-from flask import send_file, abort
-from flask import request, flash
-from flask_login import login_required, current_user
+import os
+import boto3
+from flask import request, flash, redirect, url_for, render_template, jsonify
+from werkzeug.utils import secure_filename
 from webapp.extensions import db
-from webapp.models.product import Product
+from webapp.models import Product
 from webapp.forms import ProductForm
-from io import BytesIO
-from sqlalchemy import or_  # ✅ Add this line
-
-from webapp.utils.utils import admin_required
+from flask_login import login_required
+from flask import Blueprint
+from botocore.exceptions import NoCredentialsError, ClientError
 
 admin_bp = Blueprint('admin', __name__)
 
-# @admin_bp.route('/admin')
-# @login_required
-# def dashboard():
-#     # Check if the current user is actually an admin
-#     if current_user.role != 'admin':
-#         return redirect(url_for('main.home'))  # Adjust if your home endpoint is different
+# ✅ AWS S3 Configuration for VPC Gateway Endpoint
+S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
+S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
+S3_VPC_ENDPOINT = f"https://s3.{S3_REGION}.amazonaws.com"  # Ensure correct format
 
-#     products = Product.query.all()
-#     return render_template('admin_dashboard.html', products=products)
+# ✅ Boto3 client using IAM Role authentication
+s3_client = boto3.client(
+    's3',
+    endpoint_url=S3_VPC_ENDPOINT,  # Use VPC Endpoint
+    region_name=S3_REGION
+)
 
-@admin_bp.route('/admin')
-@admin_required
-def dashboard():
-    search_query = request.args.get('search', '').strip()
 
-    if search_query:
-        products = Product.query.filter(
-            or_(
-                Product.name.ilike(f"%{search_query}%"),
-                Product.description.ilike(f"%{search_query}%")
-            )
-        ).all()
-    else:
-        products = Product.query.all()
-
-    return render_template('admin_dashboard.html', products=products, search_query=search_query)
-
-@admin_bp.route('/admin/products/new', methods=['GET', 'POST'])
-@admin_required
-def create_product():
+### ✅ **GET: Render the Product Form (Create)**
+@admin_bp.route('/admin/products/new', methods=['GET'])
+@login_required
+def create_product_form():
     form = ProductForm()
-
-    if request.method == 'POST':
-        try:
-            if form.validate_on_submit():
-                product = Product(
-                    name=form.name.data,
-                    description=form.description.data,
-                    original_price=form.original_price.data,
-                    discount_price=form.discount_price.data,
-                    stock=form.stock.data
-                )
-                # Handle the image file
-                image_file = request.files.get('image')
-                if image_file and image_file.filename:
-                    product.image_data = image_file.read()
-
-                db.session.add(product)
-                db.session.commit()
-
-                flash('Product created successfully!', 'success')
-                return redirect(url_for('admin.dashboard'))
-            else:
-                # Collect and flash individual errors
-                error_messages = []
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        # e.g. "name: This field is required."
-                        error_messages.append(f"{field}: {error}")
-
-                if error_messages:
-                    flash("Form validation failed. Errors: " + " | ".join(error_messages), 'error')
-        except Exception as e:
-            db.session.rollback()
-            flash(f"An error occurred: {str(e)}", 'error')
-
     return render_template('admin_crud.html', form=form)
 
 
-@admin_bp.route('/admin/products/<int:product_id>', methods=['GET', 'POST'])
-@admin_required
-def edit_product(product_id):
-    """Edit an existing product (Admin Only)."""
-    product = Product.query.get_or_404(product_id)
-    form = ProductForm(obj=product)
+### ✅ **POST: Handle Product Creation and S3 Upload**
+@admin_bp.route('/admin/products/new', methods=['POST'])
+@login_required
+def create_product():
+    form = ProductForm()
 
-    if form.validate_on_submit():
-        try:
-            form.populate_obj(product)  # Update non-image fields
+    try:
+        if form.validate_on_submit():
+            product = Product(
+                name=form.name.data,
+                description=form.description.data,
+                original_price=form.original_price.data,
+                discount_price=form.discount_price.data,
+                stock=form.stock.data
+            )
 
-            # Handle the image file upload
+            # ✅ Handle Image Upload to S3
             image_file = request.files.get('image')
             if image_file and image_file.filename:
-                product.image_data = image_file.read()  # Update image BLOB
+                filename = secure_filename(image_file.filename)
+                s3_key = f"uploads/products/{filename}"
 
+                # ✅ Upload to S3 using VPC Endpoint
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                )
+
+                # ✅ Store the S3 URL in the database
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+
+            db.session.add(product)
             db.session.commit()
-            flash("Product updated successfully!", "success")
+
+            flash('Product created successfully!', 'success')
             return redirect(url_for('admin.dashboard'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"An error occurred: {str(e)}", "error")
 
-    if form.errors:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"Error in {field}: {error}", "error")
+        else:
+            # Collect and flash individual errors
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
 
+            if error_messages:
+                flash("Form validation failed. Errors: " + " | ".join(error_messages), 'error')
+
+    except NoCredentialsError:
+        flash("AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", 'error')
+
+    except ClientError as e:
+        flash(f"S3 Upload Error: {str(e)}", 'error')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"An error occurred: {str(e)}", 'error')
+
+    return redirect(url_for('admin.create_product_form'))
+
+
+### ✅ **GET: Render the Product Edit Form**
+@admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
+@login_required
+def edit_product_form(product_id):
+    product = Product.query.get_or_404(product_id)
+    form = ProductForm(obj=product)
     return render_template('admin_crud.html', form=form, product=product)
 
 
-@admin_bp.route('/admin/products/<int:product_id>/image')
-@admin_required
-def product_image(product_id):
-    """Serves the product image from the BLOB column."""
-
+### ✅ **POST: Update an Existing Product**
+@admin_bp.route('/admin/products/edit/<int:product_id>', methods=['POST'])
+@login_required
+def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
-    if not product.image_data:
-        # If the product has no BLOB data, return a 404 or a placeholder
-        abort(404, "No image for this product")
+    form = ProductForm()
 
-    # Return the image data as a file-like object
-    return send_file(
-        BytesIO(product.image_data),
-        mimetype='image/jpeg',  # Or detect the actual image type if you store it
-        as_attachment=False
-    )
-
-
-@admin_bp.route('/admin/products/<int:product_id>/delete', methods=['POST'])
-@admin_required
-def delete_product(product_id):
-    # Only admins can delete products
-
-    product = Product.query.get_or_404(product_id)
     try:
-        db.session.delete(product)
-        db.session.commit()
-        flash('Product deleted successfully!', 'success')
+        if form.validate_on_submit():
+            product.name = form.name.data
+            product.description = form.description.data
+            product.original_price = form.original_price.data
+            product.discount_price = form.discount_price.data
+            product.stock = form.stock.data
+
+            # ✅ Handle Image Upload to S3 (If new image is provided)
+            image_file = request.files.get('image')
+            if image_file and image_file.filename:
+                filename = secure_filename(image_file.filename)
+                s3_key = f"uploads/products/{filename}"
+
+                # ✅ Upload to S3 using VPC Endpoint
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                )
+
+                # ✅ Update the product image URL in the database
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+
+            db.session.commit()
+
+            flash('Product updated successfully!', 'success')
+            return redirect(url_for('admin.dashboard'))
+
+    except NoCredentialsError:
+        flash("AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", 'error')
+
+    except ClientError as e:
+        flash(f"S3 Upload Error: {str(e)}", 'error')
+
     except Exception as e:
         db.session.rollback()
-        flash(f"Error deleting product: {str(e)}", 'error')
+        flash(f"An error occurred: {str(e)}", 'error')
+
+    return redirect(url_for('admin.edit_product_form', product_id=product.id))
+
+
+### ✅ **DELETE: Delete a Product**
+@admin_bp.route('/admin/products/delete/<int:product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    try:
+        # ✅ Remove product from database
+        db.session.delete(product)
+        db.session.commit()
+
+        flash('Product deleted successfully!', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"An error occurred: {str(e)}", 'error')
 
     return redirect(url_for('admin.dashboard'))
 
+
+### ✅ **GET: View All Products (Admin Dashboard)**
+@admin_bp.route('/admin/dashboard', methods=['GET'])
+@login_required
+def dashboard():
+    products = Product.query.order_by(Product.created_at.desc()).all()
+    return render_template('admin_dashboard.html', products=products)
