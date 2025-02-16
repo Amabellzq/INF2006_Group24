@@ -10,8 +10,11 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     default-libmysqlclient-dev \
     pkg-config \
+    awscli \
     && rm -rf /var/lib/apt/lists/*  # Clean up after installation
 
+# Install AWS CLI
+RUN apt update && apt install -y awscli
 # Step 4: Copy dependency files and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \

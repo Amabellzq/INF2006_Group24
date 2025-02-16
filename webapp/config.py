@@ -24,8 +24,8 @@ class Config:
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     # AWS S3 Configuration
-    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")  # s3-assets-ecommerce
-    AWS_S3_REGION = os.getenv("AWS_S3_REGION")  # us-east-1
+    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
+    AWS_S3_REGION = os.getenv("AWS_S3_REGION")
     AWS_S3_VPC_ENDPOINT = os.getenv("AWS_S3_VPC_ENDPOINT")
 
     # Ensure SSL handling for AWS RDS (if enabled)
