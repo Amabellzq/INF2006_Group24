@@ -25,71 +25,75 @@ s3_client = boto3.client(
 
 
 ### ✅ **GET: Render the Product Form (Create)**
-@admin_bp.route('/admin/products/new', methods=['GET'])
-@login_required
-def create_product_form():
-    form = ProductForm()
-    return render_template('admin_crud.html', form=form)
-
-
-### ✅ **POST: Handle Product Creation and S3 Upload**
 @admin_bp.route('/admin/products/new', methods=['POST'])
 @login_required
 def create_product():
-    form = ProductForm()
+    form = ProductForm()  # Initialize form object
 
     try:
-        if form.validate_on_submit():
-            product = Product(
-                name=form.name.data,
-                description=form.description.data,
-                original_price=form.original_price.data,
-                discount_price=form.discount_price.data,
-                stock=form.stock.data
+        # ✅ Manually Extract Data Instead of Using validate_on_submit()
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        original_price = request.form.get("original_price")
+        discount_price = request.form.get("discount_price")
+        stock = request.form.get("stock")
+
+        # ✅ Basic Validation to Prevent Empty Fields
+        if not name or not original_price or not stock:
+            flash("❌ Name, Original Price, and Stock are required fields.", "error")
+            return redirect(url_for('admin.create_product_form'))
+
+        # ✅ Convert Numeric Fields (Handle Invalid Inputs)
+        try:
+            original_price = float(original_price)
+            discount_price = float(discount_price) if discount_price else None
+            stock = int(stock)
+        except ValueError:
+            flash("❌ Invalid price or stock value. Ensure numbers are correct.", "error")
+            return redirect(url_for('admin.create_product_form'))
+
+        # ✅ Create Product Object
+        product = Product(
+            name=name,
+            description=description,
+            original_price=original_price,
+            discount_price=discount_price,
+            stock=stock
+        )
+
+        # ✅ Handle Image Upload to S3
+        image_file = request.files.get("image")
+        if image_file and image_file.filename:
+            filename = secure_filename(image_file.filename)
+            s3_key = f"uploads/products/{filename}"
+
+            # ✅ Upload to S3 using VPC Endpoint
+            s3_client.upload_fileobj(
+                image_file,
+                S3_BUCKET,
+                s3_key,
+                ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
             )
 
-            # ✅ Handle Image Upload to S3
-            image_file = request.files.get('image')
-            if image_file and image_file.filename:
-                filename = secure_filename(image_file.filename)
-                s3_key = f"uploads/products/{filename}"
+            # ✅ Store the S3 URL in the database
+            product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
 
-                # ✅ Upload to S3 using VPC Endpoint
-                s3_client.upload_fileobj(
-                    image_file,
-                    S3_BUCKET,
-                    s3_key,
-                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
-                )
+        # ✅ Save Product to Database
+        db.session.add(product)
+        db.session.commit()
 
-                # ✅ Store the S3 URL in the database
-                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
-
-            db.session.add(product)
-            db.session.commit()
-
-            flash('Product created successfully!', 'success')
-            return redirect(url_for('admin.dashboard'))
-
-        else:
-            # Collect and flash individual errors
-            error_messages = []
-            for field, errors in form.errors.items():
-                for error in errors:
-                    error_messages.append(f"{field}: {error}")
-
-            if error_messages:
-                flash("Form validation failed. Errors: " + " | ".join(error_messages), 'error')
+        flash('✅ Product created successfully!', 'success')
+        return redirect(url_for('admin.dashboard'))
 
     except NoCredentialsError:
-        flash("AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", 'error')
+        flash("❌ AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", "error")
 
     except ClientError as e:
-        flash(f"S3 Upload Error: {str(e)}", 'error')
+        flash(f"❌ S3 Upload Error: {str(e)}", "error")
 
     except Exception as e:
         db.session.rollback()
-        flash(f"An error occurred: {str(e)}", 'error')
+        flash(f"❌ An error occurred: {str(e)}", "error")
 
     return redirect(url_for('admin.create_product_form'))
 
