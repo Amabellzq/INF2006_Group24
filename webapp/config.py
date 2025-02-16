@@ -1,4 +1,6 @@
 import os
+
+import boto3
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -24,9 +26,19 @@ class Config:
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     # AWS S3 Configuration
-    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
-    AWS_S3_REGION = os.getenv("AWS_S3_REGION")
-    AWS_S3_VPC_ENDPOINT = os.getenv("AWS_S3_VPC_ENDPOINT")
+    # AWS S3 Configuration for VPC Gateway Endpoint
+    S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
+    S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
+    S3_VPC_ENDPOINT = os.getenv("AWS_S3_VPC_ENDPOINT", "http://s3.us-east-1.amazonaws.com")
+
+    # Boto3 client using VPC Endpoint
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=S3_VPC_ENDPOINT,  # Use VPC endpoint instead of public S3 URL
+        region_name=S3_REGION,
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+    )
 
     # Ensure SSL handling for AWS RDS (if enabled)
     #if os.getenv('USE_SSL', 'false').lower() == 'true':
