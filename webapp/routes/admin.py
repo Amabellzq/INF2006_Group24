@@ -11,6 +11,8 @@ from sqlalchemy import or_  # ✅ Add this line
 
 from webapp.utils.s3_helper import upload_file_to_s3
 from webapp.utils.utils import admin_required
+from botocore.exceptions import NoCredentialsError, ClientError  # ✅ Import AWS error handling
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -41,6 +43,9 @@ def dashboard():
 
     return render_template('admin_dashboard.html', products=products, search_query=search_query)
 
+
+
+
 @admin_bp.route('/admin/products/new', methods=['GET', 'POST'])
 @admin_required
 def create_product():
@@ -56,29 +61,41 @@ def create_product():
                     discount_price=form.discount_price.data,
                     stock=form.stock.data
                 )
-                # Handle the image file
+
+                # ✅ Handle the image file
                 image_file = request.files.get('image')
                 if image_file and image_file.filename:
-                    product.image_url = upload_file_to_s3(image_file)  # ✅ Store S3 URL
+                    try:
+                        product.image_url = upload_file_to_s3(image_file)  # ✅ Upload & store S3 URL
+                    except NoCredentialsError:
+                        flash("❌ AWS Credentials not found. Ensure Flask is running with the correct IAM role.",
+                              "error")
+                        return redirect(url_for('admin.create_product'))
+                    except ClientError as e:
+                        error_code = e.response['Error']['Code']
+                        flash(f"❌ S3 Upload Failed: {error_code} - {str(e)}", "error")
+                        return redirect(url_for('admin.create_product'))
+                    except Exception as e:
+                        flash(f"❌ Unexpected error during S3 upload: {str(e)}", "error")
+                        return redirect(url_for('admin.create_product'))
 
                 db.session.add(product)
                 db.session.commit()
 
-                flash('Product created successfully!', 'success')
+                flash('✅ Product created successfully!', 'success')
                 return redirect(url_for('admin.dashboard'))
             else:
                 # Collect and flash individual errors
                 error_messages = []
                 for field, errors in form.errors.items():
                     for error in errors:
-                        # e.g. "name: This field is required."
                         error_messages.append(f"{field}: {error}")
 
                 if error_messages:
-                    flash("Form validation failed. Errors: " + " | ".join(error_messages), 'error')
+                    flash("❌ Form validation failed. Errors: " + " | ".join(error_messages), "error")
         except Exception as e:
             db.session.rollback()
-            flash(f"An error occurred: {str(e)}", 'error')
+            flash(f"❌ An error occurred: {str(e)}", "error")
 
     return render_template('admin_crud.html', form=form)
 
