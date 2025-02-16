@@ -75,4 +75,4 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False  # Disable SQL logging for performance
     SESSION_COOKIE_SECURE = True  # Ensures cookies are sent only over HTTPS
-    SESSION_COOKIE_SAMESITE = 'Strict'  # Prevents CSRF (Cross-Site Request Forgery)
+    # SESSION_COOKIE_SAMESITE = 'Strict'  # Prevents CSRF (Cross-Site Request Forgery)
