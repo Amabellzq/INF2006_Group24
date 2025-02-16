@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     networks:
       - app_network  # ✅ No longer depends on Nginx
+    network_mode: "host"
 
   nginx:
     image: nginx:latest
