@@ -23,6 +23,10 @@ class Config:
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
+    # AWS S3 Configuration
+    AWS_S3_BUCKET = os.getenv('AWS_S3_BUCKET')
+    AWS_S3_REGION = os.getenv('AWS_S3_REGION')
+    AWS_S3_BASE_URL = os.getenv('AWS_S3_BASE_URL')
 
     # Ensure SSL handling for AWS RDS (if enabled)
     #if os.getenv('USE_SSL', 'false').lower() == 'true':
@@ -38,6 +42,11 @@ class Config:
     }
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # Performance boost
+
+    # AWS S3 Configuration
+    AWS_S3_BUCKET = os.getenv('AWS_S3_BUCKET')
+    AWS_S3_REGION = os.getenv('AWS_S3_REGION')
+    AWS_S3_BASE_URL = os.getenv('AWS_S3_BASE_URL')
 
     # Flask-Login & Session Management
     SESSION_TYPE = 'filesystem'  # Switch to 'redis' if needed

@@ -40,10 +40,18 @@
                     <div class="card border-light shadow-sm p-3">
                         <div class="row g-3 align-items-center">
                             <div class="col-md-4 text-center">
-                                <img src="{{ url_for('products.product_image', product_id=order.product_id) }}"
-                                     alt="{{ product.name }}"
-                                     class="img-fluid rounded shadow-sm"
-                                     style="max-height: 120px;">
+                                <!-- ✅ Use S3 Image URL Instead of Binary Data -->
+                                {% if product.image_url %}
+                                    <img src="{{ product.image_url }}"
+                                         alt="{{ product.name }}"
+                                         class="img-fluid rounded shadow-sm"
+                                         style="max-height: 120px;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/400x300?text=No+Image"
+                                         alt="No Image Available"
+                                         class="img-fluid rounded shadow-sm"
+                                         style="max-height: 120px;">
+                                {% endif %}
                             </div>
                             <div class="col-md-8">
                                 <h6 class="mb-1">{{ product.name }}</h6>

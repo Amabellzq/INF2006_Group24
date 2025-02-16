@@ -37,3 +37,12 @@ def home():
 @main_bp.route('/about')
 def about():
     return render_template('about.html')
+
+@main_bp.route('/health')
+def health_check():
+    try:
+        db.session.connection()
+        return jsonify({'status': 'healthy', 'database': 'connected'}), 200
+    except Exception as e:
+        return jsonify({'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}), 500
+

@@ -100,16 +100,16 @@ def product_detail(product_id):
 
     return render_template('product_detail.html', product=product)
 
-@product_bp.route('/products/<int:product_id>/image')
-def product_image(product_id):
-    product = Product.query.get_or_404(product_id)
-    if not product.image_data:
-        abort(404, "No image data.")
-    return send_file(
-        BytesIO(product.image_data),
-        mimetype='image/jpeg',
-        as_attachment=False
-    )
+#@product_bp.route('/products/<int:product_id>/image')
+#def product_image(product_id):
+#    product = Product.query.get_or_404(product_id)
+#    if not product.image_data:
+#        abort(404, "No image data.")
+#    return send_file(
+#        BytesIO(product.image_data),
+#        mimetype='image/jpeg',
+#        as_attachment=False
+#    )
 
 @product_bp.route('/products/flash-sale')
 def flash_sale():
@@ -145,7 +145,7 @@ def search():
             "discount_price": str(product.discount_price) if product.discount_price is not None else str(product.original_price),
             "stock": product.stock,
             "is_flash_deal": product.is_flash_sale,
-            "image": url_for('products.product_image', product_id=product.id),
+            "image_url": product.image_url,  # ✅ Direct S3 URL
             "url": url_for('products.product_detail', product_id=product.id)
         } for product in products
     ]

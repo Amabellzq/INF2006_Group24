@@ -9,6 +9,7 @@ from webapp.forms import ProductForm
 from io import BytesIO
 from sqlalchemy import or_  # ✅ Add this line
 
+from webapp.utils.s3_helper import upload_file_to_s3
 from webapp.utils.utils import admin_required
 
 admin_bp = Blueprint('admin', __name__)
@@ -58,7 +59,7 @@ def create_product():
                 # Handle the image file
                 image_file = request.files.get('image')
                 if image_file and image_file.filename:
-                    product.image_data = image_file.read()
+                    product.image_url = upload_file_to_s3(image_file)  # ✅ Store S3 URL
 
                 db.session.add(product)
                 db.session.commit()
@@ -93,10 +94,10 @@ def edit_product(product_id):
         try:
             form.populate_obj(product)  # Update non-image fields
 
-            # Handle the image file upload
+            # ✅ Upload image to S3 instead of storing as BLOB
             image_file = request.files.get('image')
             if image_file and image_file.filename:
-                product.image_data = image_file.read()  # Update image BLOB
+                product.image_url = upload_file_to_s3(image_file)  # ✅ Store S3 URL
 
             db.session.commit()
             flash("Product updated successfully!", "success")
@@ -113,22 +114,22 @@ def edit_product(product_id):
     return render_template('admin_crud.html', form=form, product=product)
 
 
-@admin_bp.route('/admin/products/<int:product_id>/image')
-@admin_required
-def product_image(product_id):
-    """Serves the product image from the BLOB column."""
-
-    product = Product.query.get_or_404(product_id)
-    if not product.image_data:
-        # If the product has no BLOB data, return a 404 or a placeholder
-        abort(404, "No image for this product")
+#@admin_bp.route('/admin/products/<int:product_id>/image')
+#@admin_required
+#def product_image(product_id):
+#    """Serves the product image from the BLOB column."""
+#
+#    product = Product.query.get_or_404(product_id)
+#    if not product.image_data:
+#        # If the product has no BLOB data, return a 404 or a placeholder
+#       abort(404, "No image for this product")
 
     # Return the image data as a file-like object
-    return send_file(
-        BytesIO(product.image_data),
-        mimetype='image/jpeg',  # Or detect the actual image type if you store it
-        as_attachment=False
-    )
+#    return send_file(
+#        BytesIO(product.image_data),
+#        mimetype='image/jpeg',  # Or detect the actual image type if you store it
+#        as_attachment=False
+#    )
 
 
 @admin_bp.route('/admin/products/<int:product_id>/delete', methods=['POST'])

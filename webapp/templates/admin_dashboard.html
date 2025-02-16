@@ -44,8 +44,9 @@
       {% for product in products %}
       <div class="col">
         <div class="card h-100 shadow-sm">
-          {% if product.image_data %}
-            <img src="{{ url_for('admin.product_image', product_id=product.id) }}" class="card-img-top" alt="{{ product.name }}">
+          <!-- ✅ Use S3 Image URL Instead of Binary Data -->
+          {% if product.image_url %}
+            <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
           {% else %}
             <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
           {% endif %}
