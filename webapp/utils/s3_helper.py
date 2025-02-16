@@ -1,7 +1,8 @@
 import boto3
 import os
 from werkzeug.utils import secure_filename
-from config import Config  # ✅ Import Config class
+
+from webapp import Config
 
 # ✅ Create S3 client (IAM Role automatically handles authentication)
 s3 = boto3.client("s3", region_name=Config.AWS_S3_REGION)
