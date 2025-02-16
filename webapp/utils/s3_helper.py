@@ -1,8 +1,10 @@
 import boto3
-import os
+import logging
 from werkzeug.utils import secure_filename
 from botocore.exceptions import NoCredentialsError, ClientError
 from webapp.config import Config  # ✅ Ensure correct import path
+
+boto3.set_stream_logger('boto3', logging.DEBUG)
 
 # ✅ Create S3 client using IAM Role authentication
 try:
