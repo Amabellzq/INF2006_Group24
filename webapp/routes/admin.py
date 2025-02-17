@@ -55,6 +55,12 @@ admin_bp = Blueprint('admin', __name__)
 S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
 S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
 S3_VPC_ENDPOINT = f"https://s3.{S3_REGION}.amazonaws.com"
+### ✅ **GET: Render the Product Form (Create)**
+@admin_bp.route('/admin/products/new', methods=['GET'])
+@login_required
+def create_product_form():
+    form = ProductForm()
+    return render_template('admin_crud.html', form=form)
 
 @admin_bp.route('/admin/products/new', methods=['POST'])
 @login_required
