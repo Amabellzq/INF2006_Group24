@@ -7,7 +7,7 @@
     <div class="col-md-6">
         {% if product.image_url %}
             <img
-                src="{{ product.image_url }}"
+                src="{{ url_for('products.product_image', product_id=product.id) }}"
                 class="img-fluid rounded-3 shadow"
                 alt="{{ product.name }}"
             >
@@ -35,32 +35,6 @@
             {% else %}
                 <h2 class="text-danger me-3">SOLD OUT</h2>
             {% endif %}
-        </div>
-
-        <div class="mb-4">
-            <div class="d-flex gap-2 mb-3">
-                {% if current_user.role == 'admin' %}
-                    <!-- Admins Cannot Purchase (Disabled Button) -->
-                    <button class="btn btn-lg btn-secondary flex-grow-1" disabled data-bs-toggle="tooltip"
-                            title="Admins cannot purchase products.">
-                        <i class="fas fa-cart-plus me-2"></i> Purchase Now
-                    </button>
-                {% else %}
-                    {% if product.stock > 0 %}
-                        <!-- Normal Users Can Purchase -->
-                        <form action="{{ url_for('payment.payment_page', product_id=product.id) }}" method="POST">
-                            <button type="submit" class="btn btn-lg btn-primary flex-grow-1">
-                                <i class="fas fa-cart-plus me-2"></i> Purchase Now
-                            </button>
-                        </form>
-                    {% else %}
-                        <!-- Disable Purchase for Out-of-Stock Products -->
-                        <button class="btn btn-lg btn-secondary flex-grow-1" disabled>
-                            <i class="fas fa-ban me-2"></i> SOLD OUT
-                        </button>
-                    {% endif %}
-                {% endif %}
-            </div>
         </div>
 
         <div class="card mb-4">

@@ -78,17 +78,27 @@
 
 # webapp/routes/products.py
 from io import BytesIO
-from flask import Blueprint, request, render_template, abort, send_file, jsonify, url_for
+
+import boto3
+from flask import Blueprint, request, render_template, abort, send_file, jsonify, url_for, Response
 from webapp.models.product import Product
 from datetime import datetime
 from sqlalchemy import or_
 
 product_bp = Blueprint('products', __name__)
 
+product_bp = Blueprint('products', __name__)
+
+# Initialize S3 client
+s3_client = boto3.client("s3")
+S3_BUCKET = "s3-assets-ecommerce"
+
+
 @product_bp.route('/products')
 def product_list():
     products = Product.query.all()
     return render_template('product_list.html', products=products)
+
 
 @product_bp.route('/products/<int:product_id>')
 def product_detail(product_id):
@@ -100,16 +110,22 @@ def product_detail(product_id):
 
     return render_template('product_detail.html', product=product)
 
+
 @product_bp.route('/products/<int:product_id>/image')
 def product_image(product_id):
     product = Product.query.get_or_404(product_id)
-    if not product.image_data:
-        abort(404, "No image data.")
-    return send_file(
-        BytesIO(product.image_data),
-        mimetype='image/jpeg',
-        as_attachment=False
-    )
+    if not product.image_url:
+        abort(404, "No image available.")
+    try:
+        # Fetch image from S3
+        s3_response = s3_client.get_object(Bucket=S3_BUCKET, Key=product.image_url)
+        image_data = s3_response["Body"].read()
+        content_type = s3_response["ContentType"]
+        return Response(image_data, mimetype=content_type)
+    except s3_client.exceptions.NoSuchKey:
+        abort(404, "Image not found in S3.")
+    except Exception as e:
+        abort(500, f"Error fetching image: {str(e)}")
 
 @product_bp.route('/products/flash-sale')
 def flash_sale():
