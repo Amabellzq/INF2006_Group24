@@ -32,6 +32,12 @@ from werkzeug.utils import secure_filename
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+### ✅ **GET: View All Products (Admin Dashboard)**
+@admin_bp.route('/admin/dashboard', methods=['GET'])
+@login_required
+def dashboard():
+    products = Product.query.order_by(Product.created_at.desc()).all()
+    return render_template('admin_dashboard.html', products=products)
 ### ✅ **GET: Render the Product Form (Create)**
 @admin_bp.route('/admin/products/new', methods=['GET'])
 @login_required
@@ -39,10 +45,9 @@ def create_product_form():
     form = ProductForm()
     return render_template('admin_crud.html', form=form)
 
-@admin_bp.route('/admin/products/create', methods=['POST'])
-@login_required
-def create_new_product():
-    logger.info("🔍 Request received at /admin/products/create")
+@admin_bp.route('/admin/products/new', methods=['POST'])
+def create_product():
+    print("🔍 Request received at /admin/products/new")
 
     try:
         # ✅ Extract Form Data
@@ -52,14 +57,14 @@ def create_new_product():
         discount_price = request.form.get("discount_price")
         stock = request.form.get("stock")
 
-        logger.info(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
+        print(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
 
         # ✅ Basic Validation
         if not name or not original_price or not stock:
             error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
-            logger.error(error_msg)
+            print(error_msg)
             flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
 
         # ✅ Convert Numeric Fields
         try:
@@ -68,7 +73,7 @@ def create_new_product():
             stock = int(stock)
         except ValueError:
             error_msg = "❌ Invalid price or stock value!"
-            logger.error(error_msg)
+            print(error_msg)
             flash(error_msg, "error")
             return jsonify({"error": error_msg}), 400
 
@@ -81,47 +86,50 @@ def create_new_product():
             stock=stock
         )
 
-        logger.info(f"✅ Product object created: {product}")
+        print(f"✅ Product object created: {product}")
 
         # ✅ Handle Image Upload to S3
-        image_file = request.files.get("image")
+        image_file = request.files["image"]
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
             s3_key = f"uploads/products/{filename}"
 
-            logger.info(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
+            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
 
             # ✅ Validate File Type
             allowed_extensions = {"jpg", "jpeg", "png"}
-            file_extension = filename.rsplit(".", 1)[1].lower()
-            if file_extension not in allowed_extensions:
+            if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
                 error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
-                logger.error(error_msg)
+                print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 400
 
             try:
-                # ✅ Upload File to S3
+                # ✅ Upload File to S3 with Public Read Access
+                acl = "public-read"
                 s3_client.upload_fileobj(
                     image_file,
                     S3_BUCKET,
-                    s3_key,
-                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                    filename,  # Uploading using the original filename
+                    ExtraArgs={
+                        "ACL": acl,
+                        "ContentType": image_file.content_type
+                    }
                 )
 
-                # ✅ Generate the S3 URL
-                product.image_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
-                logger.info(f"✅ Image uploaded successfully: {product.image_url}")
+                # ✅ Generate the Public S3 URL
+                product.image_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
+                print(f"✅ Image uploaded successfully: {product.image_url}")
 
             except NoCredentialsError:
                 error_msg = "❌ AWS IAM Role not detected!"
-                logger.error(error_msg)
+                print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 403
 
             except ClientError as e:
                 error_msg = f"❌ S3 Upload Error: {str(e)}"
-                logger.error(error_msg)
+                print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 500
 
@@ -129,7 +137,7 @@ def create_new_product():
         db.session.add(product)
         db.session.commit()
 
-        logger.info("✅ Product created successfully and saved to database!")
+        print("✅ Product created successfully and saved to database!")
         flash("✅ Product created successfully!", "success")
 
         return jsonify({"message": "✅ Product created successfully!", "product": str(product)}), 201
@@ -137,10 +145,9 @@ def create_new_product():
     except Exception as e:
         db.session.rollback()
         error_msg = f"❌ Unexpected Error: {str(e)}"
-        logger.error(error_msg)
+        print(error_msg)
         flash(error_msg, "error")
         return jsonify({"error": error_msg}), 500
-
 
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
