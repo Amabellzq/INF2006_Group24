@@ -1,6 +1,6 @@
 import os
 import boto3
-from flask import request, flash, redirect, url_for, render_template, jsonify
+from flask import request, flash, redirect, url_for, render_template, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from webapp.extensions import db
 from webapp.models import Product
@@ -8,6 +8,8 @@ from webapp.forms import ProductForm
 from flask_login import login_required
 from flask import Blueprint
 from botocore.exceptions import NoCredentialsError, ClientError
+from PIL import Image
+
 
 admin_bp = Blueprint('admin', __name__)
 
