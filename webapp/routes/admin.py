@@ -42,6 +42,16 @@ def create_product_form():
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
 
+import os
+from flask import request, jsonify, flash, send_from_directory
+from werkzeug.utils import secure_filename
+from your_flask_app import db
+from your_flask_app.models import Product
+
+# Define static upload folder
+UPLOAD_FOLDER = "static/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
+
 @admin_bp.route('/admin/products/new', methods=['POST'])
 def create_product():
     print("🔍 Request received at /admin/products/new")
@@ -85,7 +95,7 @@ def create_product():
 
         print(f"✅ Product object created: {product}")
 
-        # ✅ Handle Image Upload to Local Storage
+        # ✅ Handle Image Upload
         image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
@@ -104,7 +114,7 @@ def create_product():
             try:
                 # ✅ Save File to Local Storage
                 image_file.save(file_path)
-                product.image_url = f"/{file_path}"  # Relative URL for frontend use
+                product.image_url = f"/static/uploads/{filename}"  # Store relative URL in MySQL
                 print(f"✅ Image saved successfully: {product.image_url}")
 
             except Exception as e:
@@ -128,12 +138,12 @@ def create_product():
         flash(error_msg, "error")
         return jsonify({"error": error_msg}), 500
 
-    except Exception as e:
-        db.session.rollback()
-        error_msg = f"❌ Unexpected Error: {str(e)}"
-        print(error_msg)
-        flash(error_msg, "error")
-        return jsonify({"error": error_msg}), 500
+
+# ✅ **Serve Images Correctly**
+@admin_bp.route('/static/uploads/<filename>')
+def serve_uploaded_file(filename):
+    """ Serve uploaded images properly to avoid 403 errors """
+    return send_from_directory("static/uploads", filename)
 
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
