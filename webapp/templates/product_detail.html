@@ -5,15 +5,15 @@
 <div class="row g-5">
     <!-- Product Images -->
     <div class="col-md-6">
-        {% if product.image_data %}
+        {% if product.image_url %}
             <img
-                src="{{ url_for('products.product_image', product_id=product.id) }}"
+                src="{{ product.image_url }}"
                 class="img-fluid rounded-3 shadow"
                 alt="{{ product.name }}"
             >
         {% else %}
             <img
-                src="{{ product.image_url or 'https://via.placeholder.com/600x400?text=No+Image' }}"
+                src="https://via.placeholder.com/600x400?text=No+Image"
                 class="img-fluid rounded-3 shadow"
                 alt="{{ product.name }}"
             >
@@ -27,7 +27,6 @@
         <div class="d-flex align-items-center mb-4">
             {% if product.stock > 0 %}
                 <h2 class="text-danger me-3">
-                    <!-- ${{ "%.2f"|format(product.discount_price) }} -->
                     ${{ "%.2f"|format(product.discount_price if product.discount_price is not none else product.original_price) }}
                 </h2>
                 <s class="text-muted">
