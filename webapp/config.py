@@ -29,6 +29,7 @@ class Config:
     # Security
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '').split(',')
     SESSION_COOKIE_SECURE = os.getenv('SESSION_SECURE', 'true') == 'true'
+    WTF_CSRF_ENABLED = True  # Enable CSRF protection
 
 
 class DevelopmentConfig(Config):
