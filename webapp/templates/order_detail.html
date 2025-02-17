@@ -26,7 +26,15 @@
                                         {{ order.status|title }}
                                     </span>
                                 </li>
+                                <!-- Voucher Status Badge Before Order Status -->
+                                <li><strong>Voucher Status:</strong> 
+                                    <span id="voucher-status-{{ order.id }}" 
+                                          class="badge {% if order.voucher_status == 'used' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ order.voucher_status|title }}
+                                    </span>
+                                </li>
                             </ul>
+                            
                         </div>
                         <div class="col-md-6">
                             <h5>Payment Information</h5>

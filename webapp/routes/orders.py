@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, render_template, redirect, url_for, flash
+from flask import Blueprint, request, session, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from webapp.models import Order, Product
 from webapp.extensions import db
@@ -28,3 +28,19 @@ def order_detail(order_id):
     product = Product.query.get(order.product_id)  # Fetch product details
 
     return render_template('order_detail.html', order=order, product=product)
+
+@order_bp.route("/toggle_voucher/<int:order_id>", methods=["POST"])
+@login_required
+def toggle_voucher(order_id):
+    order = Order.query.get(order_id)
+    if not order:
+        return jsonify({"success": False, "error": "Order not found"}), 404
+
+    new_status = request.json.get("voucher_status")
+    if new_status not in ["unused", "used"]:
+        return jsonify({"success": False, "error": "Invalid status"}), 400
+
+    order.voucher_status = new_status
+    db.session.commit()
+
+    return jsonify({"success": True, "voucher_status": order.voucher_status})
