@@ -17,9 +17,9 @@
                 <form
                     method="POST"
                     enctype="multipart/form-data"
-                    action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_product') }}{% endif %}"
+                    action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_new_product') }}{% endif %}"
                 >
-                    <!-- {{ form.hidden_tag() }} -->
+                    {{ form.hidden_tag() }}
 
                     <div class="mb-3">
                         <label class="form-label">Product Name</label>

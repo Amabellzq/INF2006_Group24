@@ -13,7 +13,7 @@
                 <a href="/products" class="btn btn-success hero-btn">View all deals</a>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="{{ url_for('static', filename='media/homebanner.jpg') }}">
+                <img src="{{ url_for('static', filename='media/homebanner.jpg') }}"
                     alt="Gift Card Image"
                     class="hero-image img-fluid">
             </div>
@@ -36,12 +36,10 @@
             {% for product in flash_deals %}
             <div class="col">
                 <div class="card h-100 shadow-sm">
-                    {% if product.image_data %}
-                    <img src="{{ url_for('products.product_image', product_id=product.id) }}"
-                         class="card-img-top" alt="{{ product.name }}">
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
                     {% else %}
-                    <img src="https://via.placeholder.com/400x300?text=No+Image"
-                         class="card-img-top" alt="{{ product.name }}">
+                        <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
                     {% endif %}
 
                     <div class="card-body">
@@ -102,12 +100,10 @@
             {% for product in products %}
             <div class="col">
                 <div class="card h-100 shadow-sm">
-                    {% if product.image_data %}
-                    <img src="{{ url_for('products.product_image', product_id=product.id) }}"
-                         class="card-img-top" alt="{{ product.name }}">
+                    {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
                     {% else %}
-                    <img src="https://via.placeholder.com/400x300?text=No+Image"
-                         class="card-img-top" alt="{{ product.name }}">
+                        <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
                     {% endif %}
 
                     <div class="card-body">

@@ -8,6 +8,6 @@ from flask_marshmallow import Marshmallow
 
 db = SQLAlchemy()
 migrate = Migrate()
-cors = CORS()
+#cors = CORS()
 ma = Marshmallow()
 login_manager = LoginManager()

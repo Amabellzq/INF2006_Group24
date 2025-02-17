@@ -22,7 +22,7 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}})
+    #cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}})
     ma.init_app(app)
 
     # Register error handlers

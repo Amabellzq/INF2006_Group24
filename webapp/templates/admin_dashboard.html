@@ -44,11 +44,12 @@
       {% for product in products %}
       <div class="col">
         <div class="card h-100 shadow-sm">
-          {% if product.image_data %}
-            <img src="{{ url_for('admin.product_image', product_id=product.id) }}" class="card-img-top" alt="{{ product.name }}">
-          {% else %}
-            <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
-          {% endif %}
+            {% if product.image_url %}
+              <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
+            {% else %}
+              <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
+            {% endif %}
+
 
           <div class="card-body">
             <h5 class="card-title">{{ product.name }}</h5>
