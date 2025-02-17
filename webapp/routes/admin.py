@@ -39,8 +39,27 @@ def create_product_form():
     form = ProductForm()
     return render_template('admin_crud.html', form=form)
 
+import os
+import tempfile
+from flask import request, flash, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
+from botocore.exceptions import NoCredentialsError, ClientError
+from webapp.extensions import db
+from webapp.models import Product
+from flask_login import login_required
+from flask import Blueprint
+
+admin_bp = Blueprint('admin', __name__)
+
+# ✅ AWS S3 Configuration
+S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
+S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
+S3_VPC_ENDPOINT = f"https://s3.{S3_REGION}.amazonaws.com"
+
 @admin_bp.route('/admin/products/new', methods=['POST'])
+@login_required
 def create_product():
+    global local_image_path
     print("🔍 Request received at /admin/products/new")
 
     try:
@@ -82,8 +101,8 @@ def create_product():
 
         print(f"✅ Product object created: {product}")
 
-        # ✅ Handle Image Upload to S3
-        image_file = request.files["image"]
+        # ✅ Handle Image Upload (if an image is provided)
+        image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
             s3_key = f"uploads/products/{filename}"
@@ -99,16 +118,24 @@ def create_product():
                 return jsonify({"error": error_msg}), 400
 
             try:
+                # ✅ Save the image temporarily to a local file
+                temp_dir = tempfile.gettempdir()
+                local_image_path = os.path.join(temp_dir, filename)
 
-                s3_client.put_object(
-                    Body =image_file,
-                    Bucket=S3_BUCKET,
-                    Key=filename,
-                    ContentType=image_file.content_type
-                )
+                image_file.save(local_image_path)  # ✅ Save locally
+                print(f"📥 Image saved locally at {local_image_path}")
 
-                # ✅ Generate the Public S3 URL
-                product.image_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
+                # ✅ Upload file to S3
+                with open(local_image_path, "rb") as image_data:
+                    s3_client.upload_fileobj(
+                        image_data,
+                        S3_BUCKET,
+                        s3_key,
+                        ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                    )
+
+                # ✅ Construct the S3 Image URL
+                product.image_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
                 print(f"✅ Image uploaded successfully: {product.image_url}")
 
             except NoCredentialsError:
@@ -122,6 +149,12 @@ def create_product():
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 500
+
+            finally:
+                # ✅ Delete the local file after upload
+                if os.path.exists(local_image_path):
+                    os.remove(local_image_path)
+                    print(f"🗑️ Deleted local file: {local_image_path}")
 
         # ✅ Save Product to Database
         db.session.add(product)
