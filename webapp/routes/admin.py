@@ -39,42 +39,7 @@ def create_product_form():
     form = ProductForm()
     return render_template('admin_crud.html', form=form)
 
-import os
-import tempfile
-from flask import request, flash, jsonify, redirect, url_for
-from werkzeug.utils import secure_filename
-from botocore.exceptions import NoCredentialsError, ClientError
-from webapp.extensions import db
-from webapp.models import Product
-from flask_login import login_required
-from flask import Blueprint
-
-admin_bp = Blueprint('admin', __name__)
-
-# ✅ AWS S3 Configuration
-S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
-S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
-S3_VPC_ENDPOINT = f"https://s3.{S3_REGION}.amazonaws.com"
-### ✅ **GET: Render the Product Form (Create)**
-@admin_bp.route('/admin/products/new', methods=['GET'])
-@login_required
-def create_product_form():
-    form = ProductForm()
-    return render_template('admin_crud.html', form=form)
-
-import os
-import tempfile
-from flask import Blueprint, request, jsonify, flash
-from flask_login import login_required
-from werkzeug.utils import secure_filename
-# Define upload folder
-UPLOAD_FOLDER = 'static/uploads/products'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-admin_bp = Blueprint('admin', __name__)
-
 @admin_bp.route('/admin/products/new', methods=['POST'])
-@login_required
 def create_product():
     print("🔍 Request received at /admin/products/new")
 
@@ -93,7 +58,7 @@ def create_product():
             error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
             print(error_msg)
             flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
 
         # ✅ Convert Numeric Fields
         try:
@@ -117,13 +82,13 @@ def create_product():
 
         print(f"✅ Product object created: {product}")
 
-        # ✅ Handle Image Upload (Save Locally)
+        # ✅ Handle Image Upload to S3
         image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
-            local_image_path = os.path.join(UPLOAD_FOLDER, filename)
+            s3_key = f"uploads/products/{filename}"
 
-            print(f"📸 Image received: {filename}, saving locally at {local_image_path}")
+            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
 
             # ✅ Validate File Type
             allowed_extensions = {"jpg", "jpeg", "png"}
@@ -134,15 +99,25 @@ def create_product():
                 return jsonify({"error": error_msg}), 400
 
             try:
-                # ✅ Save the image locally
-                image_file.save(local_image_path)
-                print(f"📥 Image saved locally at {local_image_path}")
+                # ✅ Upload File to S3
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                )
 
-                # ✅ Store the local image path in the database
-                product.image_url = f"/{local_image_path}"  # Relative path for frontend
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+                print(f"✅ Image uploaded successfully: {product.image_url}")
 
-            except Exception as e:
-                error_msg = f"❌ Error saving image: {str(e)}"
+            except NoCredentialsError:
+                error_msg = "❌ AWS IAM Role not detected!"
+                print(error_msg)
+                flash(error_msg, "error")
+                return jsonify({"error": error_msg}), 403
+
+            except ClientError as e:
+                error_msg = f"❌ S3 Upload Error: {str(e)}"
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 500
@@ -188,17 +163,17 @@ def edit_product(product_id):
             product.stock = form.stock.data
 
             # ✅ Handle Image Upload to S3 (If new image is provided)
-            image_file = request.files['image']
+            image_file = request.files.get('image')
             if image_file and image_file.filename:
                 filename = secure_filename(image_file.filename)
                 s3_key = f"uploads/products/{filename}"
 
                 # ✅ Upload to S3 using VPC Endpoint
-                s3_client.put_object(
-                    Body =image_file,
-                    Bucket=S3_BUCKET,
-                    Key=filename,
-                    ContentType=image_file.content_type
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
                 )
 
                 # ✅ Update the product image URL in the database
