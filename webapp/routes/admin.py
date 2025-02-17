@@ -62,10 +62,22 @@ def create_product_form():
     form = ProductForm()
     return render_template('admin_crud.html', form=form)
 
+import os
+import tempfile
+from flask import Blueprint, request, jsonify, flash
+from flask_login import login_required
+from werkzeug.utils import secure_filename
+from your_database_model import db, Product  # Ensure you have this import
+
+# Define upload folder
+UPLOAD_FOLDER = 'static/uploads/products'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+admin_bp = Blueprint('admin', __name__)
+
 @admin_bp.route('/admin/products/new', methods=['POST'])
 @login_required
 def create_product():
-    global local_image_path
     print("🔍 Request received at /admin/products/new")
 
     try:
@@ -83,7 +95,7 @@ def create_product():
             error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
             print(error_msg)
             flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
+            return jsonify({"error": error_msg}), 400
 
         # ✅ Convert Numeric Fields
         try:
@@ -107,13 +119,13 @@ def create_product():
 
         print(f"✅ Product object created: {product}")
 
-        # ✅ Handle Image Upload (if an image is provided)
+        # ✅ Handle Image Upload (Save Locally)
         image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
-            s3_key = f"uploads/products/{filename}"
+            local_image_path = os.path.join(UPLOAD_FOLDER, filename)
 
-            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
+            print(f"📸 Image received: {filename}, saving locally at {local_image_path}")
 
             # ✅ Validate File Type
             allowed_extensions = {"jpg", "jpeg", "png"}
@@ -124,43 +136,18 @@ def create_product():
                 return jsonify({"error": error_msg}), 400
 
             try:
-                # ✅ Save the image temporarily to a local file
-                temp_dir = tempfile.gettempdir()
-                local_image_path = os.path.join(temp_dir, filename)
-
-                image_file.save(local_image_path)  # ✅ Save locally
+                # ✅ Save the image locally
+                image_file.save(local_image_path)
                 print(f"📥 Image saved locally at {local_image_path}")
 
-                # ✅ Upload file to S3
-                with open(local_image_path, "rb") as image_data:
-                    s3_client.upload_fileobj(
-                        image_data,
-                        S3_BUCKET,
-                        s3_key,
-                        ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
-                    )
+                # ✅ Store the local image path in the database
+                product.image_url = f"/{local_image_path}"  # Relative path for frontend
 
-                # ✅ Construct the S3 Image URL
-                product.image_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
-                print(f"✅ Image uploaded successfully: {product.image_url}")
-
-            except NoCredentialsError:
-                error_msg = "❌ AWS IAM Role not detected!"
-                print(error_msg)
-                flash(error_msg, "error")
-                return jsonify({"error": error_msg}), 403
-
-            except ClientError as e:
-                error_msg = f"❌ S3 Upload Error: {str(e)}"
+            except Exception as e:
+                error_msg = f"❌ Error saving image: {str(e)}"
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 500
-
-            finally:
-                # ✅ Delete the local file after upload
-                if os.path.exists(local_image_path):
-                    os.remove(local_image_path)
-                    print(f"🗑️ Deleted local file: {local_image_path}")
 
         # ✅ Save Product to Database
         db.session.add(product)

@@ -11,15 +11,11 @@
                 <h2 class="card-title mb-4">
                     {{ 'Edit' if product else 'Create' }} Product
                 </h2>
-
-                <!-- Notice `enctype="multipart/form-data"` for file uploads -->
-                <!-- Also note `{{ form.hidden_tag() }}` to include the CSRF token -->
                 <form
                     method="POST"
                     enctype="multipart/form-data"
                     action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_product') }}{% endif %}"
                 >
-                    <!-- {{ form.hidden_tag() }} -->
 
                     <div class="mb-3">
                         <label class="form-label">Product Name</label>
