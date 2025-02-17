@@ -1,6 +1,6 @@
 import os
 import boto3
-from flask import request, flash, redirect, url_for, render_template, jsonify, send_from_directory
+from flask import request, flash, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 from webapp.extensions import db
 from webapp.models import Product
@@ -8,8 +8,6 @@ from webapp.forms import ProductForm
 from flask_login import login_required
 from flask import Blueprint
 from botocore.exceptions import NoCredentialsError, ClientError
-from PIL import Image
-
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -41,30 +39,6 @@ def create_product_form():
     form = ProductForm()
     return render_template('admin_crud.html', form=form)
 
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
-
-def process_and_save_image(image_file, upload_folder):
-    """ Convert image to a standard format and save """
-    filename = secure_filename(image_file.filename)
-    file_ext = filename.rsplit('.', 1)[1].lower()
-
-    # ✅ Validate file type
-    allowed_extensions = {"jpg", "jpeg", "png"}
-    if file_ext not in allowed_extensions:
-        raise ValueError("❌ Only JPG, JPEG, and PNG files are allowed.")
-
-    # ✅ Open image and convert to JPEG
-    image = Image.open(image_file)
-    image = image.convert("RGB")  # Convert to RGB to avoid transparency issues
-
-    # ✅ Save the image with a new filename
-    new_filename = f"{os.path.splitext(filename)[0]}.jpg"
-    file_path = os.path.join(upload_folder, new_filename)
-    image.save(file_path, "JPEG")
-
-    return new_filename
-
 @admin_bp.route('/admin/products/new', methods=['POST'])
 def create_product():
     print("🔍 Request received at /admin/products/new")
@@ -84,7 +58,7 @@ def create_product():
             error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
             print(error_msg)
             flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
 
         # ✅ Convert Numeric Fields
         try:
@@ -108,22 +82,42 @@ def create_product():
 
         print(f"✅ Product object created: {product}")
 
-        # ✅ Handle Image Upload
+        # ✅ Handle Image Upload to S3
         image_file = request.files.get("image")
         if image_file and image_file.filename:
-            try:
-                new_filename = process_and_save_image(image_file, UPLOAD_FOLDER)
-                product.image_url = f"/static/uploads/{new_filename}"  # Store relative URL in MySQL
-                print(f"✅ Image processed and saved: {product.image_url}")
+            filename = secure_filename(image_file.filename)
+            s3_key = f"uploads/products/{filename}"
 
-            except ValueError as e:
-                error_msg = str(e)
+            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
+
+            # ✅ Validate File Type
+            allowed_extensions = {"jpg", "jpeg", "png"}
+            if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
+                error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 400
 
-            except Exception as e:
-                error_msg = f"❌ File Save Error: {str(e)}"
+            try:
+                # ✅ Upload File to S3
+                s3_client.upload_fileobj(
+                    image_file,
+                    S3_BUCKET,
+                    s3_key,
+                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                )
+
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+                print(f"✅ Image uploaded successfully: {product.image_url}")
+
+            except NoCredentialsError:
+                error_msg = "❌ AWS IAM Role not detected!"
+                print(error_msg)
+                flash(error_msg, "error")
+                return jsonify({"error": error_msg}), 403
+
+            except ClientError as e:
+                error_msg = f"❌ S3 Upload Error: {str(e)}"
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 500
@@ -138,17 +132,12 @@ def create_product():
         return jsonify({"message": "✅ Product created successfully!", "product": str(product)}), 201
 
     except Exception as e:
+        db.session.rollback()
         error_msg = f"❌ Unexpected Error: {str(e)}"
         print(error_msg)
         flash(error_msg, "error")
         return jsonify({"error": error_msg}), 500
 
-
-# ✅ **Serve Images Correctly**
-@admin_bp.route('/static/uploads/<filename>')
-def serve_uploaded_file(filename):
-    """ Serve uploaded images properly to avoid 403 errors """
-    return send_from_directory("static/uploads", filename)
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
 @login_required
