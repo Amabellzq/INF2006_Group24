@@ -67,8 +67,6 @@ import tempfile
 from flask import Blueprint, request, jsonify, flash
 from flask_login import login_required
 from werkzeug.utils import secure_filename
-from your_database_model import db, Product  # Ensure you have this import
-
 # Define upload folder
 UPLOAD_FOLDER = 'static/uploads/products'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
