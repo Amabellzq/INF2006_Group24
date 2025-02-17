@@ -32,12 +32,6 @@ from werkzeug.utils import secure_filename
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-### ✅ **GET: View All Products (Admin Dashboard)**
-@admin_bp.route('/admin/dashboard', methods=['GET'])
-@login_required
-def dashboard():
-    products = Product.query.order_by(Product.created_at.desc()).all()
-    return render_template('admin_dashboard.html', products=products)
 ### ✅ **GET: Render the Product Form (Create)**
 @admin_bp.route('/admin/products/new', methods=['GET'])
 @login_required
