@@ -174,11 +174,11 @@ def edit_product(product_id):
                 s3_key = f"uploads/products/{filename}"
 
                 # ✅ Upload to S3 using VPC Endpoint
-                s3_client.upload_fileobj(
-                    image_file,
-                    S3_BUCKET,
-                    s3_key,
-                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                s3_client.put_object(
+                    Body =image_file,
+                    Bucket=S3_BUCKET,
+                    Key=filename,
+                    ContentType=image_file.content_type
                 )
 
                 # ✅ Update the product image URL in the database
