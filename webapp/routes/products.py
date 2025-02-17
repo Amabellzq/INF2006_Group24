@@ -12,9 +12,21 @@ s3_client = boto3.client("s3")
 S3_BUCKET = "s3-assets-ecommerce"
 
 
-def generate_presigned_url(s3_key, expiration=3600):
-    """ Generate a presigned URL for accessing S3 objects. """
+import re
+
+def extract_s3_key(image_url):
+    """Extracts the S3 object key from the full S3 URL."""
+    match = re.search(r"s3-assets-ecommerce/(.*)", image_url)
+    return match.group(1) if match else None
+
+def generate_presigned_url(image_url, expiration=3600):
+    """Generate a presigned URL by extracting the correct S3 key."""
     try:
+        s3_key = extract_s3_key(image_url)  # Extract key from stored URL
+        if not s3_key:
+            print(f"❌ Invalid S3 Key from URL: {image_url}")
+            return None
+
         url = s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': S3_BUCKET, 'Key': s3_key},
@@ -39,7 +51,6 @@ def product_list():
 def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
 
-    # Ensure discount_price is not None
     if product.discount_price is None:
         product.discount_price = product.original_price
 
