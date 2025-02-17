@@ -99,16 +99,12 @@ def create_product():
                 return jsonify({"error": error_msg}), 400
 
             try:
-                # ✅ Upload File to S3 with Public Read Access
-                acl = "public-read"
-                s3_client.upload_fileobj(
-                    image_file,
-                    S3_BUCKET,
-                    filename,  # Uploading using the original filename
-                    ExtraArgs={
-                        "ACL": acl,
-                        "ContentType": image_file.content_type
-                    }
+
+                s3_client.put_object(
+                    Body =image_file,
+                    Bucket=S3_BUCKET,
+                    Key=filename,
+                    ContentType=image_file.content_type
                 )
 
                 # ✅ Generate the Public S3 URL
