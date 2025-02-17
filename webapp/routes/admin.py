@@ -42,13 +42,26 @@ def create_product_form():
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
 
-import os
-from flask import request, jsonify, flash, send_from_directory
-from werkzeug.utils import secure_filename
+def process_and_save_image(image_file, upload_folder):
+    """ Convert image to a standard format and save """
+    filename = secure_filename(image_file.filename)
+    file_ext = filename.rsplit('.', 1)[1].lower()
 
-# Define static upload folder
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
+    # ✅ Validate file type
+    allowed_extensions = {"jpg", "jpeg", "png"}
+    if file_ext not in allowed_extensions:
+        raise ValueError("❌ Only JPG, JPEG, and PNG files are allowed.")
+
+    # ✅ Open image and convert to JPEG
+    image = Image.open(image_file)
+    image = image.convert("RGB")  # Convert to RGB to avoid transparency issues
+
+    # ✅ Save the image with a new filename
+    new_filename = f"{os.path.splitext(filename)[0]}.jpg"
+    file_path = os.path.join(upload_folder, new_filename)
+    image.save(file_path, "JPEG")
+
+    return new_filename
 
 @admin_bp.route('/admin/products/new', methods=['POST'])
 def create_product():
@@ -96,24 +109,16 @@ def create_product():
         # ✅ Handle Image Upload
         image_file = request.files.get("image")
         if image_file and image_file.filename:
-            filename = secure_filename(image_file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            try:
+                new_filename = process_and_save_image(image_file, UPLOAD_FOLDER)
+                product.image_url = f"/static/uploads/{new_filename}"  # Store relative URL in MySQL
+                print(f"✅ Image processed and saved: {product.image_url}")
 
-            print(f"📸 Image received: {filename}, saving to {file_path}")
-
-            # ✅ Validate File Type
-            allowed_extensions = {"jpg", "jpeg", "png"}
-            if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
-                error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
+            except ValueError as e:
+                error_msg = str(e)
                 print(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 400
-
-            try:
-                # ✅ Save File to Local Storage
-                image_file.save(file_path)
-                product.image_url = f"/static/uploads/{filename}"  # Store relative URL in MySQL
-                print(f"✅ Image saved successfully: {product.image_url}")
 
             except Exception as e:
                 error_msg = f"❌ File Save Error: {str(e)}"
@@ -142,7 +147,6 @@ def create_product():
 def serve_uploaded_file(filename):
     """ Serve uploaded images properly to avoid 403 errors """
     return send_from_directory("static/uploads", filename)
-
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
 @login_required
