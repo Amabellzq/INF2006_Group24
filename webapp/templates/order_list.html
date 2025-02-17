@@ -19,6 +19,7 @@
                             <th>Product</th>
                             <th>Total</th>
                             <th>Action</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,6 +44,24 @@
                                 {% endif %}
                             </td>
                             <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>
+                                <!-- <span id="voucher-status-{{ order.id }}" 
+                                      class="badge {% if order.voucher_status == 'used' %}bg-danger{% else %}bg-success{% endif %}">
+                                    {{ order.voucher_status|title }}
+                                </span> -->
+                                <!-- Toggle Switch -->
+                                {% if order.voucher_status == 'unused' %}
+                                    <button class="btn btn-success use-voucher-btn"
+                                            id="use-voucher-{{ order.id }}"
+                                            data-order-id="{{ order.id }}">
+                                        Use Voucher
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-secondary" disabled>
+                                        Voucher Used
+                                    </button>
+                                {% endif %}
+                            </td>
                             <td class="text-end">
                                 <a href="{{ url_for('orders.order_detail', order_id=order.id) }}" 
                                    class="btn btn-sm btn-outline-primary">
@@ -60,4 +79,39 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".use-voucher-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                let orderId = this.getAttribute("data-order-id");
+                let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+                fetch(`/toggle_voucher/${orderId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken  // Use CSRF token from meta tag
+                    },
+                    body: JSON.stringify({ voucher_status: "used" })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let badge = document.getElementById(`voucher-status-${orderId}`);
+                        badge.textContent = "Used";
+                        badge.classList.remove("bg-success");
+                        badge.classList.add("bg-danger");
+                        let button = document.getElementById(`use-voucher-${orderId}`);
+                        button.textContent = "Voucher Used";
+                        button.classList.remove("btn-success");
+                        button.classList.add("btn-secondary");
+                        button.disabled = true;
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        });
+    });
+</script>
+
 {% endblock %}

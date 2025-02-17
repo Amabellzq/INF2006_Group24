@@ -8,11 +8,17 @@ from webapp.errors import (
     handle_concurrent_update
 )
 from webapp.models import User
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()  # Initialize CSRF Protection
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     login_manager.init_app(app)
+    
+    csrf.init_app(app)
+
 
     # User loader function
     @login_manager.user_loader
