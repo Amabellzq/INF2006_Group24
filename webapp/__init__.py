@@ -1,6 +1,6 @@
 from flask import Flask
 from webapp.config import Config
-from webapp.extensions import db, migrate, cors, ma, login_manager
+from webapp.extensions import db, migrate, ma, login_manager
 from webapp.errors import (
     handle_validation_error,
     handle_http_error,
