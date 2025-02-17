@@ -168,7 +168,7 @@ def edit_product(product_id):
             product.stock = form.stock.data
 
             # ✅ Handle Image Upload to S3 (If new image is provided)
-            image_file = request.files.get('image')
+            image_file = request.files['image']
             if image_file and image_file.filename:
                 filename = secure_filename(image_file.filename)
                 s3_key = f"uploads/products/{filename}"
