@@ -45,8 +45,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
 import os
 from flask import request, jsonify, flash, send_from_directory
 from werkzeug.utils import secure_filename
-from your_flask_app import db
-from your_flask_app.models import Product
 
 # Define static upload folder
 UPLOAD_FOLDER = "static/uploads"
