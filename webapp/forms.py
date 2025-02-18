@@ -36,7 +36,6 @@ class ProductForm(FlaskForm):
         validators=[InputRequired(), NumberRange(min=0)]
     )
 
-    # ✅ Allow user to select an S3 image OR upload a new one
     image_url = StringField('Image URL', validators=[Optional()])
 
     image = FileField(

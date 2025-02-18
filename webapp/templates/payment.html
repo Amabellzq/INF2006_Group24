@@ -38,8 +38,6 @@
                     <!-- Payment Form -->
                     <div class="col-md-7">
                         <form method="POST" action="{{ url_for('payment.process_payment', product_id=product.id) }}">
-                            {{ form.hidden_tag() }}
-
                             <div class="mb-3">
                                 {{ form.card_number.label(class="form-label") }}
                                 <input type="text"

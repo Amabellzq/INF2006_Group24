@@ -8,19 +8,16 @@ from webapp.models import Product
 from webapp.extensions import db
 from botocore.exceptions import NoCredentialsError, ClientError
 
-# ✅ Logging Setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ Define Flask Blueprint
+
 main_bp = Blueprint('main', __name__)
 
-# ✅ AWS S3 Configuration for VPC Gateway Endpoint
 S3_BUCKET = os.getenv("AWS_S3_BUCKET", "s3-assets-ecommerce")
 S3_REGION = os.getenv("AWS_S3_REGION", "us-east-1")
 S3_VPC_ENDPOINT = f"https://s3.{S3_REGION}.amazonaws.com"  # ✅ Ensure correct format
 
-# ✅ Boto3 client using IAM Role authentication (No access keys needed)
 s3_client = boto3.client(
     's3',
     endpoint_url=S3_VPC_ENDPOINT,  # ✅ Use VPC Endpoint
@@ -28,7 +25,6 @@ s3_client = boto3.client(
 )
 
 
-# ✅ Health Check Route
 @main_bp.route('/health')
 def health_check():
     try:
@@ -39,7 +35,6 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}), 500
 
 
-# ✅ Homepage Route
 @main_bp.route('/')
 def home():
     """Fetch all products and separate Flash Deals from regular products."""
@@ -57,24 +52,20 @@ def home():
     return render_template('home.html', flash_deals=flash_deals, products=products)
 
 
-# ✅ About Page Route
 @main_bp.route('/about')
 def about():
     return render_template('about.html')
 
 
-# ✅ Route to Create and Upload File to S3
 @main_bp.route('/create-upload', methods=['GET'])
 def create_and_upload_file():
     try:
-        # ✅ Step 1: Create a new file locally
         file_path = "newtestfile.txt"
         file_content = "This is a test file uploaded to S3 via Flask."
 
         with open(file_path, "w") as file:
             file.write(file_content)
 
-        # ✅ Step 2: Upload file to S3
         s3_key = f"uploads/newtestfile.txt"  # Folder path in S3
 
         with open(file_path, "rb") as file:
@@ -85,10 +76,8 @@ def create_and_upload_file():
                 ExtraArgs={"ContentType": "text/plain", "ACL": "private"}  # Use 'public-read' if needed
             )
 
-        # ✅ Step 3: Construct the S3 URL
         file_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
 
-        # ✅ Step 4: Delete the local file after upload
         os.remove(file_path)
 
         return jsonify({
@@ -109,7 +98,6 @@ def create_and_upload_file():
         return jsonify({"error": f"Unexpected Error: {str(e)}"}), 500
 
 
-# ✅ Insert Fake Products (Uses BannerAbout.png)
 @main_bp.route('/insert-fake-products', methods=['GET'])
 def insert_fake_products():
     try:
@@ -137,11 +125,10 @@ def insert_fake_products():
             }
         ]
 
-        # ✅ Upload BannerAbout.png for each product
         local_image_path = "webapp/static/media/BannerAbout.png"
         if not os.path.exists(local_image_path):
-            logger.error("❌ Error: BannerAbout.png file not found!")
-            return jsonify({"error": "❌ BannerAbout.png file not found!"}), 404
+            logger.error(" Error: BannerAbout.png file not found!")
+            return jsonify({"error": "BannerAbout.png file not found!"}), 404
 
         s3_key = f"uploads/products/BannerAbout.png"
 
@@ -153,10 +140,10 @@ def insert_fake_products():
                 ExtraArgs={'ContentType': 'image/png', 'ACL': 'private'}
             )
 
-        # ✅ Store the S3 Image URL
+        #  Store the S3 Image URL
         image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
 
-        # ✅ Insert Products into Database
+        #  Insert Products into Database
         for fake in fake_products:
             product = Product(
                 name=fake["name"],
@@ -164,7 +151,7 @@ def insert_fake_products():
                 original_price=fake["original_price"],
                 discount_price=fake["discount_price"],
                 stock=fake["stock"],
-                image_url=image_url,  # ✅ Use the uploaded S3 image
+                image_url=image_url,  #  Use the uploaded S3 image
                 is_flash_sale=random.choice([True, False]),
                 flash_sale_start=datetime.utcnow() if random.choice([True, False]) else None,
                 flash_sale_end=datetime.utcnow() + timedelta(days=1) if random.choice([True, False]) else None,
@@ -174,10 +161,10 @@ def insert_fake_products():
             db.session.add(product)
 
         db.session.commit()
-        logger.info("✅ Fake products inserted successfully!")
+        logger.info(" Fake products inserted successfully!")
 
         return jsonify({
-            "message": "✅ Fake products inserted successfully!",
+            "message": " Fake products inserted successfully!",
             "image_url": image_url
         }), 201
 

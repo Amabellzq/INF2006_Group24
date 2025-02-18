@@ -38,10 +38,10 @@ def product_image(product_id):
         # Extract the correct S3 key
         s3_key = extract_s3_key(product.image_url)
         if not s3_key:
-            print(f"❌ Invalid S3 Key Extracted for {product.image_url}")
+            print(f"Invalid S3 Key Extracted for {product.image_url}")
             abort(400, "Invalid S3 Key.")
 
-        print(f"🔑 Extracted S3 Key: {s3_key}")
+        print(f"Extracted S3 Key: {s3_key}")
 
         # Fetch image from S3 via VPC Gateway
         s3_response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_key)
@@ -52,10 +52,10 @@ def product_image(product_id):
         return Response(image_data, mimetype=content_type)
 
     except s3_client.exceptions.NoSuchKey:
-        print(f"❌ S3 Object Not Found: {s3_key}")
+        print(f"S3 Object Not Found: {s3_key}")
         abort(404, "Image not found in S3.")
     except Exception as e:
-        print(f"❌ Error fetching image: {str(e)}")
+        print(f"Error fetching image: {str(e)}")
         abort(500, f"Internal Server Error: {str(e)}")
 
 
@@ -93,7 +93,7 @@ def search():
     if not query:
         return jsonify({"results": []})
 
-    # ✅ Perform case-insensitive search on product name and description
+    # Perform case-insensitive search on product name and description
     products = Product.query.filter(
         or_(
             Product.name.ilike(f'%{query}%'),
@@ -101,7 +101,7 @@ def search():
         )
     ).all()
 
-    # ✅ Format results for JSON response, ensuring discount_price is never None
+    # Format results for JSON response, ensuring discount_price is never None
     results = [
         {
             "name": product.name,
