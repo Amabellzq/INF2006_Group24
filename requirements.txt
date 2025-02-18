@@ -19,3 +19,7 @@ boto3==1.36.21
 pillow==11.1.0
 redis==5.2.1
 flask_session ==0.8.0
+botocore~=1.36.21
+marshmallow~=3.26.0
+cryptography~=44.0.0
+WTForms~=3.2.1
