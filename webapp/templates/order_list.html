@@ -85,14 +85,13 @@
         document.querySelectorAll(".use-voucher-btn").forEach(button => {
             button.addEventListener("click", function() {
                 let orderId = this.getAttribute("data-order-id");
-                let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+
                 fetch(`/toggle_voucher/${orderId}`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken  // Use CSRF token from meta tag
+                        "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ voucher_status: "used" })
+                    body: JSON.stringify({ voucher_status: "used" }) // No CSRF token
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -113,5 +112,6 @@
         });
     });
 </script>
+
 
 {% endblock %}

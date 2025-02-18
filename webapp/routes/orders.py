@@ -1,6 +1,7 @@
 from flask import Blueprint, request, session, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from webapp.models import Order, Product
+from flask_wtf.csrf import disable_csrf
 from webapp.extensions import db
 
 order_bp = Blueprint('orders', __name__)
@@ -29,16 +30,32 @@ def order_detail(order_id):
 
     return render_template('order_detail.html', order=order, product=product)
 
+# @order_bp.route("/toggle_voucher/<int:order_id>", methods=["POST"])
+# @login_required
+# def toggle_voucher(order_id):
+#     order = Order.query.get(order_id)
+#     if not order:
+#         return jsonify({"success": False, "error": "Order not found"}), 404
+#     new_status = request.json.get("voucher_status")
+#     if new_status not in ["unused", "used"]:
+#         return jsonify({"success": False, "error": "Invalid status"}), 400
+#     order.voucher_status = new_status
+#     db.session.commit()
+    
+#     return jsonify({"success": True, "voucher_status": order.voucher_status})
+
 @order_bp.route("/toggle_voucher/<int:order_id>", methods=["POST"])
-@login_required
+@disable_csrf  # Disable CSRF protection for this endpoint
 def toggle_voucher(order_id):
     order = Order.query.get(order_id)
     if not order:
         return jsonify({"success": False, "error": "Order not found"}), 404
+
     new_status = request.json.get("voucher_status")
     if new_status not in ["unused", "used"]:
         return jsonify({"success": False, "error": "Invalid status"}), 400
+
     order.voucher_status = new_status
     db.session.commit()
-    
+
     return jsonify({"success": True, "voucher_status": order.voucher_status})

@@ -16,7 +16,6 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     login_manager.init_app(app)
     
-    csrf.init_app(app)
     app.config['SESSION_REDIS'] = redis.from_url(
         app.config['REDIS_URL'],
         ssl=True
