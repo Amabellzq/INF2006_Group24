@@ -180,3 +180,8 @@ def insert_fake_products():
         db.session.rollback()
         logger.error(f"Unexpected Error: {str(e)}")
         return jsonify({"error": f"Unexpected Error: {str(e)}"}), 500
+
+@main_bp.route('/check-db')
+def check_db():
+    result = db.session.execute("SELECT @@hostname").fetchall()
+    return jsonify({"Using Database": result[0][0]})

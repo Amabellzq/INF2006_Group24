@@ -1,7 +1,7 @@
 import redis
 from flask_session import Session
-from flask import Flask
 from webapp.config import Config
+from flask import Flask, g, request
 from webapp.extensions import db, migrate, ma, login_manager
 from webapp.errors import (
     handle_validation_error,
@@ -22,6 +22,11 @@ def create_app(config_class=Config):
     )
     app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken', 'X-XSRF-TOKEN']
     Session(app)
+
+    @app.before_request
+    def set_db_bind():
+        """Automatically bind read queries to the read replica."""
+        g.db_bind = "read_replica" if request.method == "GET" else None
 
 
     # User loader function
