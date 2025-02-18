@@ -60,12 +60,12 @@ def create_product_form():
 
 
 
-### ✅ **POST: Create **
 @admin_bp.route('/admin/products/new', methods=['POST'])
 @login_required
 def create_product():
     form = ProductForm(request.form)
 
+    # ✅ Validate form submission
     if not form.validate_on_submit():
         for field, errors in form.errors.items():
             for error in errors:
@@ -73,13 +73,35 @@ def create_product():
         return redirect(url_for('admin.create_product_form'))
 
     try:
+        # ✅ Extract data and validate
+        name = form.name.data.strip()
+        description = form.description.data.strip()
+        original_price = form.original_price.data
+        discount_price = form.discount_price.data
+        stock = form.stock.data
+        image_url = form.image_url.data  # ✅ Use selected S3 image URL
+
+        if not name or not original_price or not stock:
+            flash("❌ Name, Original Price, and Stock are required fields.", "error")
+            return redirect(url_for('admin.create_product_form'))
+
+        # ✅ Ensure numeric fields are valid
+        try:
+            original_price = float(original_price)
+            discount_price = float(discount_price) if discount_price else None
+            stock = int(stock)
+        except ValueError:
+            flash("❌ Invalid price or stock value!", "error")
+            return redirect(url_for('admin.create_product_form'))
+
+        # ✅ Create Product Object
         product = Product(
-            name=form.name.data.strip(),
-            description=form.description.data.strip(),
-            original_price=form.original_price.data,
-            discount_price=form.discount_price.data,
-            stock=form.stock.data,
-            image_url=form.image_url.data  # ✅ Store selected S3 image URL
+            name=name,
+            description=description,
+            original_price=original_price,
+            discount_price=discount_price,
+            stock=stock,
+            image_url=image_url  # ✅ Store selected S3 image URL
         )
 
         db.session.add(product)
