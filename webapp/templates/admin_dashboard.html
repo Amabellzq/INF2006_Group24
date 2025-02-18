@@ -9,20 +9,6 @@
   <div class="card shadow-sm">
     <div class="card-body">
       <form method="GET" action="{{ url_for('admin.dashboard') }}" class="row g-3 align-items-center">
-        <div class="col-auto">
-          <input
-            type="text"
-            name="search"
-            value="{{ request.args.get('search', '') }}"
-            class="form-control"
-            placeholder="Search product..."
-          >
-        </div>
-        <div class="col-auto">
-          <button type="submit" class="btn btn-secondary">
-            <i class="fas fa-search me-1"></i>Search
-          </button>
-        </div>
         <div class="col-auto ms-auto">
           <a href="{{ url_for('admin.create_product') }}" class="btn btn-success">
             <i class="fas fa-plus me-1"></i>New Product
@@ -79,25 +65,5 @@
     </div>
   {% endif %}
 </div>
-
-<!-- JavaScript for AJAX Search -->
-<script>
-  document.getElementById("searchForm").addEventListener("submit", function(event) {
-      event.preventDefault(); // Prevent full page reload
-
-      let query = document.getElementById("searchQuery").value.trim();
-      
-      fetch(`/admin/dashboard?search=${query}`, { method: "GET" })
-      .then(response => response.text())
-      .then(html => {
-          let parser = new DOMParser();
-          let doc = parser.parseFromString(html, "text/html");
-          let newResults = doc.getElementById("productResults").innerHTML;
-          
-          document.getElementById("productResults").innerHTML = newResults;
-      })
-      .catch(error => console.error("Error fetching search results:", error));
-  });
-</script>
 
 {% endblock %}
