@@ -16,20 +16,32 @@ import re
 
 def extract_s3_key(image_url):
     """Extracts the S3 object key from the full S3 URL."""
-    return image_url.replace(f"https://s3.us-east-1.amazonaws.com/{S3_BUCKET}/", "")
+    if not image_url:
+        return None
+    match = re.search(rf"{S3_BUCKET}/(.+)", image_url)
+    return match.group(1) if match else None
 
 
 @product_bp.route('/products/<int:product_id>/image')
 def product_image(product_id):
     """Retrieve and serve an image from S3 via VPC Gateway Endpoint."""
+    global s3_key
     product = Product.query.get_or_404(product_id)
 
     if not product.image_url:
         abort(404, "No image available.")
 
     try:
-        # Extract only the object key from the full image URL
+        # Log product image URL for debugging
+        print(f"📸 Fetching image for product {product_id}: {product.image_url}")
+
+        # Extract the correct S3 key
         s3_key = extract_s3_key(product.image_url)
+        if not s3_key:
+            print(f"❌ Invalid S3 Key Extracted for {product.image_url}")
+            abort(400, "Invalid S3 Key.")
+
+        print(f"🔑 Extracted S3 Key: {s3_key}")
 
         # Fetch image from S3 via VPC Gateway
         s3_response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_key)
@@ -40,9 +52,11 @@ def product_image(product_id):
         return Response(image_data, mimetype=content_type)
 
     except s3_client.exceptions.NoSuchKey:
+        print(f"❌ S3 Object Not Found: {s3_key}")
         abort(404, "Image not found in S3.")
     except Exception as e:
-        abort(500, f"Error fetching image: {str(e)}")
+        print(f"❌ Error fetching image: {str(e)}")
+        abort(500, f"Internal Server Error: {str(e)}")
 
 
 @product_bp.route('/products')

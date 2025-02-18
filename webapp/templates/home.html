@@ -3,7 +3,6 @@
 
 {% block content %}
 
-<!-- Hero Section -->
 <header class="hero-section">
     <div class="container">
         <div class="row align-items-center">
@@ -22,10 +21,8 @@
 </header>
 
 <div class="mb-4">
-
     <h1 class="mb-3">Exclusive Deals for You</h1>
 
-    <!-- 🔥 Flash Deals Row -->
     <div class="mb-4">
         <h2 class="text-danger fw-bold">
             <i class="fas fa-bolt"></i> Flash Deals
@@ -36,7 +33,6 @@
             {% for product in flash_deals %}
             <div class="col">
                 <div class="card h-100 shadow-sm">
-                    <!-- ✅ Load product image via Flask route fetching from S3 -->
                     {% if product.image_url %}
                         <img src="{{ url_for('products.product_image', product_id=product.id) }}"
                              class="card-img-top"
