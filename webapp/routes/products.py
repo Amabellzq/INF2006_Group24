@@ -11,39 +11,43 @@ product_bp = Blueprint('products', __name__)
 s3_client = boto3.client("s3")
 S3_BUCKET = "s3-assets-ecommerce"
 
-
 import re
+
 
 def extract_s3_key(image_url):
     """Extracts the S3 object key from the full S3 URL."""
-    match = re.search(r"s3-assets-ecommerce/(.*)", image_url)
-    return match.group(1) if match else None
+    return image_url.replace(f"https://s3.us-east-1.amazonaws.com/{S3_BUCKET}/", "")
 
-def generate_presigned_url(image_url, expiration=3600):
-    """Generate a presigned URL by extracting the correct S3 key."""
+
+@product_bp.route('/products/<int:product_id>/image')
+def product_image(product_id):
+    """Retrieve and serve an image from S3 via VPC Gateway Endpoint."""
+    product = Product.query.get_or_404(product_id)
+
+    if not product.image_url:
+        abort(404, "No image available.")
+
     try:
-        s3_key = extract_s3_key(image_url)  # Extract key from stored URL
-        if not s3_key:
-            print(f"❌ Invalid S3 Key from URL: {image_url}")
-            return None
+        # Extract only the object key from the full image URL
+        s3_key = extract_s3_key(product.image_url)
 
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': S3_BUCKET, 'Key': s3_key},
-            ExpiresIn=expiration
-        )
-        return url
+        # Fetch image from S3 via VPC Gateway
+        s3_response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_key)
+
+        image_data = s3_response["Body"].read()
+        content_type = s3_response["ContentType"]
+
+        return Response(image_data, mimetype=content_type)
+
+    except s3_client.exceptions.NoSuchKey:
+        abort(404, "Image not found in S3.")
     except Exception as e:
-        print(f"❌ Error generating presigned URL: {e}")
-        return None
+        abort(500, f"Error fetching image: {str(e)}")
 
 
 @product_bp.route('/products')
 def product_list():
     products = Product.query.all()
-    for product in products:
-        if product.image_url:
-            product.image_url = generate_presigned_url(product.image_url)
     return render_template('product_list.html', products=products)
 
 
@@ -53,9 +57,6 @@ def product_detail(product_id):
 
     if product.discount_price is None:
         product.discount_price = product.original_price
-
-    if product.image_url:
-        product.image_url = generate_presigned_url(product.image_url)
 
     return render_template('product_detail.html', product=product)
 
@@ -68,9 +69,6 @@ def flash_sale():
         Product.flash_sale_start <= now,
         Product.flash_sale_end >= now
     ).all()
-    for product in products:
-        if product.image_url:
-            product.image_url = generate_presigned_url(product.image_url)
     return render_template('product_list.html', products=products, flash_sale=True)
 
 
@@ -99,8 +97,8 @@ def search():
                 product.original_price),
             "stock": product.stock,
             "is_flash_deal": product.is_flash_sale,
-            "image": generate_presigned_url(
-                product.image_url) if product.image_url else "https://via.placeholder.com/400x300?text=No+Image",
+            "image": url_for('products.product_image',
+                             product_id=product.id) if product.image_url else "https://via.placeholder.com/400x300?text=No+Image",
             "url": url_for('products.product_detail', product_id=product.id)
         } for product in products
     ]
