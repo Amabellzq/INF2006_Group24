@@ -45,7 +45,7 @@
       <div class="col">
         <div class="card h-100 shadow-sm">
             {% if product.image_url %}
-              <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}">
+            <img src="{{ url_for('products.product_image', product_id=product.id) }}">
             {% else %}
               <img src="https://via.placeholder.com/400x300?text=No+Image" class="card-img-top" alt="{{ product.name }}">
             {% endif %}
@@ -64,7 +64,7 @@
 
           <div class="card-footer d-flex gap-2">
             <a href="{{ url_for('admin.edit_product', product_id=product.id) }}" class="btn btn-sm btn-primary flex-fill">
-              <i class="fas fa-edit me-1"></i>View Details
+              <i class="fas fa-edit me-1"></i>Edit Details
             </a>
 
             <form method="POST" action="{{ url_for('admin.delete_product', product_id=product.id) }}" class="flex-fill">
