@@ -10,9 +10,6 @@ from webapp.errors import (
     handle_concurrent_update
 )
 from webapp.models import User
-from flask_wtf.csrf import CSRFProtect, generate_csrf
-
-csrf = CSRFProtect()  # Initialize CSRF Protection
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -26,10 +23,6 @@ def create_app(config_class=Config):
     )
 
     Session(app)
-
-    @app.context_processor
-    def inject_csrf_token():
-        return dict(csrf_token=generate_csrf())
 
 
     # User loader function
