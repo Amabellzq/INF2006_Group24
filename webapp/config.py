@@ -17,6 +17,7 @@ class Config:
 
     # We'll read the REDIS_URL from .env
     REDIS_URL = os.environ.get('REDIS_URL')
+    WTF_CSRF_ENABLED = False
 
 
     # AWS RDS Database Configuration
