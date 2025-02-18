@@ -1,7 +1,6 @@
 from flask import Blueprint, request, session, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from webapp.models import Order, Product
-from flask_wtf.csrf import disable_csrf
 from webapp.extensions import db
 
 order_bp = Blueprint('orders', __name__)
@@ -45,7 +44,6 @@ def order_detail(order_id):
 #     return jsonify({"success": True, "voucher_status": order.voucher_status})
 
 @order_bp.route("/toggle_voucher/<int:order_id>", methods=["POST"])
-@disable_csrf  # Disable CSRF protection for this endpoint
 def toggle_voucher(order_id):
     order = Order.query.get(order_id)
     if not order:
