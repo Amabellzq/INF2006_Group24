@@ -96,15 +96,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        let badge = document.getElementById(`voucher-status-${orderId}`);
-                        badge.textContent = "Used";
-                        badge.classList.remove("bg-success");
-                        badge.classList.add("bg-danger");
-                        let button = document.getElementById(`use-voucher-${orderId}`);
-                        button.textContent = "Voucher Used";
-                        button.classList.remove("btn-success");
-                        button.classList.add("btn-secondary");
-                        button.disabled = true;
+                        // Refresh the page after successful voucher update
+                        window.location.reload();
                     }
                 })
                 .catch(error => console.error("Error:", error));
@@ -112,6 +105,7 @@
         });
     });
 </script>
+
 
 
 {% endblock %}
