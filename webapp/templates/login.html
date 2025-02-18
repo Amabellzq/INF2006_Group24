@@ -10,7 +10,9 @@
             <div class="card-body p-5">
                 <h2 class="card-title text-center mb-4">Welcome Back</h2>
                 <form method="POST" action="{{ url_for('auth.login') }}">
-                    <div class="mb-3">
+                                    <!-- Hidden field for CSRF token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
                         <label class="form-label">Email Address</label>
                         <input type="email"
                                class="form-control"
