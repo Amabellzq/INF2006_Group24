@@ -80,41 +80,33 @@
     </div>
 </div>
 
+
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".use-voucher-btn").forEach(button => {
-        button.addEventListener("click", function() {
-            let orderId = this.getAttribute("data-order-id");
-            let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".use-voucher-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                let orderId = this.getAttribute("data-order-id");
 
-            fetch(`/toggle_voucher/${orderId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken  // Use CSRF token from meta tag
-                },
-                body: JSON.stringify({ voucher_status: "used" })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    let badge = document.getElementById(`voucher-status-${orderId}`);
-                    badge.textContent = "Used";
-                    badge.classList.remove("bg-success");
-                    badge.classList.add("bg-danger");
-
-                    let button = document.getElementById(`use-voucher-${orderId}`);
-                    button.textContent = "Voucher Used";
-                    button.classList.remove("btn-success");
-                    button.classList.add("btn-secondary");
-                    button.disabled = true;
-                }
-            })
-            .catch(error => console.error("Error:", error));
+                fetch(`/toggle_voucher/${orderId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ voucher_status: "used" }) // No CSRF token
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh the page after successful voucher update
+                        window.location.reload();
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
         });
     });
-});
-
 </script>
+
+
 
 {% endblock %}
