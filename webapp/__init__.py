@@ -20,7 +20,7 @@ def create_app(config_class=Config):
         app.config['REDIS_URL'],
         ssl=True
     )
-
+    app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken', 'X-XSRF-TOKEN']
     Session(app)
 
 
