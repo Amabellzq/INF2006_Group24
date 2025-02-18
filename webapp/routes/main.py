@@ -4,6 +4,8 @@ import random
 import logging
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, render_template
+from sqlalchemy import text
+
 from webapp.models import Product
 from webapp.extensions import db
 from botocore.exceptions import NoCredentialsError, ClientError
@@ -183,5 +185,10 @@ def insert_fake_products():
 
 @main_bp.route('/check-db')
 def check_db():
-    result = db.session.execute("SELECT @@hostname").fetchall()
-    return jsonify({"Using Database": result[0][0]})
+    try:
+        with db.session.connection() as conn:
+            result = conn.execute(text("SELECT @@hostname")).fetchone()
+        return jsonify({"Using Database": result[0] if result else "Unknown"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

@@ -24,7 +24,7 @@ def create_app(config_class=Config):
     def set_db_bind():
         """Automatically bind read queries to the read replica."""
         g.db_bind = "read_replica" if request.method == "GET" else None
-        
+
     app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken', 'X-XSRF-TOKEN']
     Session(app)
 
