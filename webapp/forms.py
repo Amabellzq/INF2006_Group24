@@ -8,8 +8,9 @@ from wtforms import StringField, SubmitField
 
 
 class ProductForm(FlaskForm):
-    def __init__(self, formdata=_Auto, **kwargs):
-        super().__init__(formdata, kwargs)
+    def __init__(self, *args, **kwargs):
+        """Fix initialization to properly inherit FlaskForm behavior."""
+        super(ProductForm, self).__init__(*args, **kwargs)
         self.image_url = None
 
     name = StringField('Product Name', validators=[DataRequired()])
@@ -27,8 +28,9 @@ class ProductForm(FlaskForm):
         NumberRange(min=0)
     ])
 
-    # New field to handle image uploads
-    image = FileField('Product Image', validators=[
+    # ✅ Fix: Allow selection of existing S3 images instead of only file uploads
+    image_url = StringField('Image URL', validators=[Optional()])
+    image = FileField('Upload Image', validators=[
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files are allowed!')
     ])
 

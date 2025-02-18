@@ -52,9 +52,11 @@ def list_s3_images():
 @admin_bp.route('/admin/products/new', methods=['GET'])
 @login_required
 def create_product_form():
+    """Fetch list of images from S3 and render product creation form."""
     s3_images = list_s3_images()
     form = ProductForm()
     return render_template('admin_crud.html', form=form, s3_images=s3_images)
+
 
 
 
@@ -95,9 +97,12 @@ def create_product():
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
 @login_required
 def edit_product_form(product_id):
+    """Fetch product details and available S3 images for editing."""
     product = Product.query.get_or_404(product_id)
+    s3_images = list_s3_images()
     form = ProductForm(obj=product)
-    return render_template('admin_crud.html', form=form, product=product)
+    return render_template('admin_crud.html', form=form, product=product, s3_images=s3_images)
+
 
 
 ### ✅ **POST: Update an Existing Product**
