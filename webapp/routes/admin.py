@@ -148,27 +148,33 @@ def edit_product_form(product_id):
 
 
 ### ✅ **POST: Update an Existing Product**
+### ✅ **POST: Update an Existing Product**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['POST'])
 @login_required
 def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
-    form = ProductForm()
+    form = ProductForm(request.form)
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "error")
+        return redirect(url_for('admin.edit_product_form', product_id=product_id))
 
     try:
-        if form.validate_on_submit():
-            product.name = form.name.data
-            product.description = form.description.data
-            product.original_price = form.original_price.data
-            product.discount_price = form.discount_price.data
-            product.stock = form.stock.data
+        product.name = form.name.data
+        product.description = form.description.data
+        product.original_price = form.original_price.data
+        product.discount_price = form.discount_price.data
+        product.stock = form.stock.data
 
-            # ✅ Handle Image Upload to S3 (If new image is provided)
-            image_file = request.files.get('image')
-            if image_file and image_file.filename:
-                filename = secure_filename(image_file.filename)
-                s3_key = f"uploads/products/{filename}"
+        # ✅ Handle Image Upload to S3 (If new image is provided)
+        image_file = request.files.get('image')
+        if image_file and image_file.filename:
+            filename = secure_filename(image_file.filename)
+            s3_key = f"uploads/products/{filename}"
 
-                # ✅ Upload to S3 using VPC Endpoint
+            try:
                 s3_client.upload_fileobj(
                     image_file,
                     S3_BUCKET,
@@ -176,25 +182,21 @@ def edit_product(product_id):
                     ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
                 )
 
-                # ✅ Update the product image URL in the database
                 product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
 
-            db.session.commit()
+            except (NoCredentialsError, ClientError) as e:
+                flash(f"❌ S3 Upload Error: {str(e)}", "error")
+                return redirect(url_for('admin.edit_product_form', product_id=product_id))
 
-            flash('Product updated successfully!', 'success')
-            return redirect(url_for('admin.dashboard'))
+        db.session.commit()
 
-    except NoCredentialsError:
-        flash("AWS IAM Role not detected. Ensure EC2 has an IAM Role attached.", 'error')
-
-    except ClientError as e:
-        flash(f"S3 Upload Error: {str(e)}", 'error')
+        flash("✅ Product updated successfully!", "success")
+        return redirect(url_for('admin.dashboard'))
 
     except Exception as e:
         db.session.rollback()
-        flash(f"An error occurred: {str(e)}", 'error')
-
-    return redirect(url_for('admin.edit_product_form', product_id=product.id))
+        flash(f"❌ Unexpected Error: {str(e)}", "error")
+        return redirect(url_for('admin.edit_product_form', product_id=product_id))
 
 
 ### ✅ **DELETE: Delete a Product**
