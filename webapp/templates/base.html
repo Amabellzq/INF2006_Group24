@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <!-- Custom CSS -->
-              <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
 <body class="bg-light">
@@ -155,9 +155,18 @@
             if (data.results.length === 0) {
                 resultsDiv.innerHTML = "<p class='text-center text-muted'>No results found.</p>";
                 setTimeout(() => {
-                    var searchModal = bootstrap.Modal.getInstance(document.getElementById('searchModal'));
-                    searchModal.hide();
-                }, 1500); // Auto-close modal if no results
+                  let modalElement = document.getElementById('searchModal');
+                  if (modalElement) {
+                      let searchModal = bootstrap.Modal.getInstance(modalElement);
+                      if (searchModal) {
+                          searchModal.hide();
+                      } else {
+                          console.warn("Bootstrap modal instance is null.");
+                      }
+                  } else {
+                      console.warn("Modal element not found.");
+                  }
+              }, 1500);
             } else {
                 data.results.forEach(item => {
                     let cardHTML = `
