@@ -14,6 +14,7 @@
                     method="POST"
                     enctype="multipart/form-data"
                     action="{% if product %}{{ url_for('admin.edit_product', product_id=product.id) }}{% else %}{{ url_for('admin.create_product') }}{% endif %}"
+                    onsubmit="return validateForm()"
                 >
 
                     <div class="mb-3">
@@ -22,6 +23,7 @@
                             type="text"
                             class="form-control"
                             name="name"
+                            id="name"
                             value="{{ product.name if product else '' }}"
                             required
                         >
@@ -36,6 +38,7 @@
                                     type="number"
                                     class="form-control"
                                     name="original_price"
+                                    id="original_price"
                                     step="0.01"
                                     value="{{ product.original_price if product else '' }}"
                                     required
@@ -50,6 +53,7 @@
                                     type="number"
                                     class="form-control"
                                     name="discount_price"
+                                    id="discount_price"
                                     step="0.01"
                                     value="{{ product.discount_price if product else '' }}"
                                 >
@@ -62,6 +66,7 @@
                         <textarea
                             class="form-control"
                             name="description"
+                            id="description"
                             rows="4"
                         >{{ product.description if product else '' }}</textarea>
                     </div>
@@ -73,13 +78,14 @@
                                 type="number"
                                 class="form-control"
                                 name="stock"
+                                id="stock"
                                 value="{{ product.stock if product else '' }}"
                                 required
                             >
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
-                            <select class="form-select" name="is_active">
+                            <select class="form-select" name="is_active" id="is_active">
                                 <option value="true" {% if product and product.is_active %}selected{% endif %}>Active</option>
                                 <option value="false" {% if product and not product.is_active %}selected{% endif %}>Inactive</option>
                             </select>
@@ -89,7 +95,7 @@
                     <!-- ✅ Select Image from S3 Dropdown -->
                     <div class="mb-4">
                         <label class="form-label">Select Product Image</label>
-                        <select class="form-select" name="image_url">
+                        <select class="form-select" name="image_url" id="image_url">
                             <option value="">Select an image</option>
                             {% for image_url in s3_images %}
                                 <option value="{{ image_url }}" {% if product and product.image_url == image_url %}selected{% endif %}>
@@ -109,4 +115,40 @@
         </div>
     </div>
 </div>
+
+<!-- ✅ JavaScript Validation -->
+<script>
+    function validateForm() {
+        let name = document.getElementById("name").value.trim();
+        let original_price = document.getElementById("original_price").value.trim();
+        let discount_price = document.getElementById("discount_price").value.trim();
+        let stock = document.getElementById("stock").value.trim();
+        let image_url = document.getElementById("image_url").value.trim();
+
+        // ✅ Check required fields
+        if (!name) {
+            alert("❌ Product Name is required.");
+            return false;
+        }
+        if (!original_price || isNaN(original_price) || parseFloat(original_price) <= 0) {
+            alert("❌ Please enter a valid Original Price greater than 0.");
+            return false;
+        }
+        if (discount_price && (isNaN(discount_price) || parseFloat(discount_price) <= 0)) {
+            alert("❌ Please enter a valid Discount Price or leave it empty.");
+            return false;
+        }
+        if (!stock || isNaN(stock) || parseInt(stock) < 0) {
+            alert("❌ Please enter a valid Stock Quantity (0 or more).");
+            return false;
+        }
+        if (!image_url) {
+            alert("❌ Please select an image from S3.");
+            return false;
+        }
+
+        return true; // ✅ Allow form submission
+    }
+</script>
+
 {% endblock %}

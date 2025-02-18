@@ -64,29 +64,20 @@ def create_product_form():
 @login_required
 def create_product():
     try:
-        form = ProductForm(request.form)
-
-        # ✅ Validate form submission
-        if not form.validate_on_submit():
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"❌ {field}: {error}", "error")
-            raise ValueError("Form validation failed.")
-
-        # ✅ Extract data and validate
+        # ✅ Extract data from request.form
         try:
-            name = form.name.data.strip()
-            description = form.description.data.strip()
-            original_price = form.original_price.data
-            discount_price = form.discount_price.data
-            stock = form.stock.data
-            image_url = form.image_url.data  # ✅ Use selected S3 image URL
+            name = request.form.get("name", "").strip()
+            description = request.form.get("description", "").strip()
+            original_price = request.form.get("original_price", "").strip()
+            discount_price = request.form.get("discount_price", "").strip()
+            stock = request.form.get("stock", "").strip()
+            image_url = request.form.get("image_url", "").strip()  # ✅ Use selected S3 image URL
 
             if not name or not original_price or not stock:
                 flash("❌ Name, Original Price, and Stock are required fields.", "error")
                 raise ValueError("Missing required fields: Name, Original Price, or Stock.")
 
-        except AttributeError as e:
+        except Exception as e:
             flash(f"❌ Error extracting form data: {str(e)}", "error")
             raise
 
@@ -140,30 +131,46 @@ def edit_product_form(product_id):
     return render_template('admin_crud.html', form=form, product=product, s3_images=s3_images)
 
 
-
-### ✅ **POST: Update an Existing Product**
-### ✅ **POST: Update an Existing Product**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['POST'])
 @login_required
 def edit_product(product_id):
-    product = Product.query.get_or_404(product_id)
-    form = ProductForm(request.form)
+    """Update an existing product without using Flask-WTF forms."""
 
-    if not form.validate_on_submit():
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"{field}: {error}", "error")
-        return redirect(url_for('admin.edit_product_form', product_id=product_id))
+    product = Product.query.get_or_404(product_id)
 
     try:
-        product.name = form.name.data
-        product.description = form.description.data
-        product.original_price = form.original_price.data
-        product.discount_price = form.discount_price.data
-        product.stock = form.stock.data
+        # ✅ Extract Data Manually from `request.form`
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        original_price = request.form.get("original_price")
+        discount_price = request.form.get("discount_price")
+        stock = request.form.get("stock")
+        image_url = request.form.get("image_url")  # ✅ User can select an S3 image URL
 
-        # ✅ Handle Image Upload to S3 (If new image is provided)
-        image_file = request.files.get('image')
+        # ✅ Ensure Required Fields Exist
+        if not name or not original_price or not stock:
+            flash("❌ Name, Original Price, and Stock are required fields.", "error")
+            return redirect(url_for('admin.edit_product_form', product_id=product_id))
+
+        # ✅ Convert Numeric Fields
+        try:
+            original_price = float(original_price)
+            discount_price = float(discount_price) if discount_price else None
+            stock = int(stock)
+        except ValueError:
+            flash("❌ Invalid price or stock value!", "error")
+            return redirect(url_for('admin.edit_product_form', product_id=product_id))
+
+        # ✅ Update Product Fields
+        product.name = name
+        product.description = description
+        product.original_price = original_price
+        product.discount_price = discount_price
+        product.stock = stock
+        product.image_url = image_url  # ✅ Update selected image from S3 dropdown
+
+        # ✅ Handle Image Upload to S3 (If a new image file is uploaded)
+        image_file = request.files.get("image")
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
             s3_key = f"uploads/products/{filename}"
@@ -173,19 +180,18 @@ def edit_product(product_id):
                     image_file,
                     S3_BUCKET,
                     s3_key,
-                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
+                    ExtraArgs={"ContentType": image_file.content_type, "ACL": "private"}
                 )
-
-                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
+                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"  # ✅ Store new uploaded image URL
 
             except (NoCredentialsError, ClientError) as e:
                 flash(f"❌ S3 Upload Error: {str(e)}", "error")
                 return redirect(url_for('admin.edit_product_form', product_id=product_id))
 
+        # ✅ Commit Changes to Database
         db.session.commit()
-
         flash("✅ Product updated successfully!", "success")
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for("admin.dashboard"))
 
     except Exception as e:
         db.session.rollback()
