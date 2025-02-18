@@ -1,4 +1,5 @@
 import redis
+from flask_session import Session
 from flask import Flask
 from webapp.config import Config
 from webapp.extensions import db, migrate, ma, login_manager
