@@ -1,7 +1,6 @@
 # webapp/__init__.py
 from flask import Flask
 from webapp.config import Config
-from flask_wtf.csrf import CSRFProtect
 from webapp.extensions import db, migrate, cors, ma, login_manager
 from webapp.errors import (
     handle_validation_error,
@@ -11,14 +10,11 @@ from webapp.errors import (
 )
 from webapp.models import User
 
-csrf = CSRFProtect()  # Initialize CSRF Protection
-
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     login_manager.init_app(app)
 
-    csrf.init_app(app)
 
     # User loader function
     @login_manager.user_loader
