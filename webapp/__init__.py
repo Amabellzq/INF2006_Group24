@@ -1,3 +1,4 @@
+import redis
 from flask import Flask
 from webapp.config import Config
 from webapp.extensions import db, migrate, ma, login_manager
@@ -18,6 +19,12 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     
     csrf.init_app(app)
+    app.config['SESSION_REDIS'] = redis.from_url(
+        app.config['REDIS_URL'],
+        ssl=True
+    )
+
+    Session(app)
 
     @app.context_processor
     def inject_csrf_token():

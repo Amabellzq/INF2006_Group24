@@ -13,6 +13,10 @@ class Config:
     # Core Flask settings
     SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')  # Security fallback
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+    SESSION_TYPE = 'redis'
+
+    # We'll read the REDIS_URL from .env
+    REDIS_URL = os.environ.get('REDIS_URL')
 
 
 
