@@ -19,7 +19,6 @@ class Config:
     REDIS_URL = os.environ.get('REDIS_URL')
 
 
-
     # AWS RDS Database Configuration
     DB_USER = os.getenv('DB_USER')  # RDS Master username
     DB_PASSWORD = os.getenv('DB_PASSWORD')
