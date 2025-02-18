@@ -41,7 +41,7 @@ def create_product_form():
 
 @admin_bp.route('/admin/products/new', methods=['POST'])
 def create_product():
-    print("🔍 Request received at /admin/products/new")
+    logger.info("🔍 Request received at /admin/products/new")
 
     try:
         # ✅ Extract Form Data
@@ -51,12 +51,12 @@ def create_product():
         discount_price = request.form.get("discount_price")
         stock = request.form.get("stock")
 
-        print(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
+        logger.info(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
 
         # ✅ Basic Validation
         if not name or not original_price or not stock:
             error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
-            print(error_msg)
+            logger.error(error_msg)
             flash(error_msg, "error")
             return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
 
@@ -67,7 +67,7 @@ def create_product():
             stock = int(stock)
         except ValueError:
             error_msg = "❌ Invalid price or stock value!"
-            print(error_msg)
+            logger.error(error_msg)
             flash(error_msg, "error")
             return jsonify({"error": error_msg}), 400
 
@@ -80,7 +80,7 @@ def create_product():
             stock=stock
         )
 
-        print(f"✅ Product object created: {product}")
+        logger.info(f"✅ Product object created: {product}")
 
         # ✅ Handle Image Upload to S3
         image_file = request.files.get("image")
@@ -88,13 +88,13 @@ def create_product():
             filename = secure_filename(image_file.filename)
             s3_key = f"uploads/products/{filename}"
 
-            print(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
+            logger.info(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
 
             # ✅ Validate File Type
             allowed_extensions = {"jpg", "jpeg", "png"}
             if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
                 error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
-                print(error_msg)
+                logger.error(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 400
 
@@ -112,7 +112,7 @@ def create_product():
 
             except NoCredentialsError:
                 error_msg = "❌ AWS IAM Role not detected!"
-                print(error_msg)
+                logger.error(error_msg)
                 flash(error_msg, "error")
                 return jsonify({"error": error_msg}), 403
 
@@ -134,7 +134,7 @@ def create_product():
     except Exception as e:
         db.session.rollback()
         error_msg = f"❌ Unexpected Error: {str(e)}"
-        print(error_msg)
+        logger.error(error_msg)
         flash(error_msg, "error")
         return jsonify({"error": error_msg}), 500
 
