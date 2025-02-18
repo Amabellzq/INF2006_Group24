@@ -1,4 +1,3 @@
-<!-- templates/admin_crud.html -->
 {% extends "base.html" %}
 
 {% block title %}{{ 'Edit' if product else 'Create' }} Product{% endblock %}
@@ -87,16 +86,17 @@
                         </div>
                     </div>
 
-                    <!-- New Image Upload Field -->
+                    <!-- ✅ Select Image from S3 Dropdown -->
                     <div class="mb-4">
-                        <label for="image" class="form-label">Product Image</label>
-                        <input
-                            type="file"
-                            class="form-control"
-                            id="image"
-                            name="image"
-                            accept="image/*"
-                        >
+                        <label class="form-label">Select Product Image</label>
+                        <select class="form-select" name="image_url">
+                            <option value="">Select an image</option>
+                            {% for image_url in s3_images %}
+                                <option value="{{ image_url }}" {% if product and product.image_url == image_url %}selected{% endif %}>
+                                    {{ image_url.split('/')[-1] }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
 
                     <div class="d-grid">

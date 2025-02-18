@@ -7,6 +7,10 @@ from wtforms import StringField, SubmitField
 
 
 class ProductForm(FlaskForm):
+    def __init__(self, formdata=_Auto, **kwargs):
+        super().__init__(formdata, kwargs)
+        self.image_url = None
+
     name = StringField('Product Name', validators=[DataRequired()])
     description = TextAreaField('Description')
     original_price = DecimalField('Original Price', validators=[

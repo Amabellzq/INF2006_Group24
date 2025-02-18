@@ -32,111 +32,64 @@ from werkzeug.utils import secure_filename
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-### ✅ **GET: Render the Product Form (Create)**
+
+def list_s3_images():
+    """Fetch the list of images from the S3 bucket inside 'uploads/products/'."""
+    try:
+        response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="uploads/products/")
+        image_urls = [
+            f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{obj['Key']}"
+            for obj in response.get('Contents', [])
+            if obj['Key'].lower().endswith(('jpg', 'jpeg', 'png'))
+        ]
+        return image_urls
+    except ClientError as e:
+        flash(f"Error fetching images: {e}", "error")
+        return []
+
+
+### ✅ **Render the Product Form (Create)**
 @admin_bp.route('/admin/products/new', methods=['GET'])
 @login_required
 def create_product_form():
+    s3_images = list_s3_images()
     form = ProductForm()
-    return render_template('admin_crud.html', form=form)
+    return render_template('admin_crud.html', form=form, s3_images=s3_images)
 
+
+
+### ✅ **POST: Create **
 @admin_bp.route('/admin/products/new', methods=['POST'])
+@login_required
 def create_product():
-    logger.info("🔍 Request received at /admin/products/new")
+    form = ProductForm(request.form)
+
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "error")
+        return redirect(url_for('admin.create_product_form'))
 
     try:
-        # ✅ Extract Form Data
-        name = request.form.get("name", "").strip()
-        description = request.form.get("description", "").strip()
-        original_price = request.form.get("original_price")
-        discount_price = request.form.get("discount_price")
-        stock = request.form.get("stock")
-
-        logger.info(f"📝 Received Data: name={name}, price={original_price}, stock={stock}")
-
-        # ✅ Basic Validation
-        if not name or not original_price or not stock:
-            error_msg = "❌ Missing required fields: Name, Original Price, or Stock."
-            logger.error(error_msg)
-            flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400  # 🛑 Show in F12 Network Tab
-
-        # ✅ Convert Numeric Fields
-        try:
-            original_price = float(original_price)
-            discount_price = float(discount_price) if discount_price else None
-            stock = int(stock)
-        except ValueError:
-            error_msg = "❌ Invalid price or stock value!"
-            logger.error(error_msg)
-            flash(error_msg, "error")
-            return jsonify({"error": error_msg}), 400
-
-        # ✅ Create Product Object
         product = Product(
-            name=name,
-            description=description,
-            original_price=original_price,
-            discount_price=discount_price,
-            stock=stock
+            name=form.name.data.strip(),
+            description=form.description.data.strip(),
+            original_price=form.original_price.data,
+            discount_price=form.discount_price.data,
+            stock=form.stock.data,
+            image_url=form.image_url.data  # ✅ Store selected S3 image URL
         )
 
-        logger.info(f"✅ Product object created: {product}")
-
-        # ✅ Handle Image Upload to S3
-        image_file = request.files.get("image")
-        if image_file and image_file.filename:
-            filename = secure_filename(image_file.filename)
-            s3_key = f"uploads/products/{filename}"
-
-            logger.info(f"📸 Image received: {filename}, uploading to S3 at {s3_key}")
-
-            # ✅ Validate File Type
-            allowed_extensions = {"jpg", "jpeg", "png"}
-            if "." in filename and filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
-                error_msg = "❌ Only JPG, JPEG, and PNG files are allowed."
-                logger.error(error_msg)
-                flash(error_msg, "error")
-                return jsonify({"error": error_msg}), 400
-
-            try:
-                # ✅ Upload File to S3
-                s3_client.upload_fileobj(
-                    image_file,
-                    S3_BUCKET,
-                    s3_key,
-                    ExtraArgs={'ContentType': image_file.content_type, 'ACL': 'private'}
-                )
-
-                product.image_url = f"{S3_VPC_ENDPOINT}/{S3_BUCKET}/{s3_key}"
-                print(f"✅ Image uploaded successfully: {product.image_url}")
-
-            except NoCredentialsError:
-                error_msg = "❌ AWS IAM Role not detected!"
-                logger.error(error_msg)
-                flash(error_msg, "error")
-                return jsonify({"error": error_msg}), 403
-
-            except ClientError as e:
-                error_msg = f"❌ S3 Upload Error: {str(e)}"
-                print(error_msg)
-                flash(error_msg, "error")
-                return jsonify({"error": error_msg}), 500
-
-        # ✅ Save Product to Database
         db.session.add(product)
         db.session.commit()
 
-        print("✅ Product created successfully and saved to database!")
         flash("✅ Product created successfully!", "success")
-
-        return jsonify({"message": "✅ Product created successfully!", "product": str(product)}), 201
+        return redirect(url_for('admin.dashboard'))
 
     except Exception as e:
         db.session.rollback()
-        error_msg = f"❌ Unexpected Error: {str(e)}"
-        logger.error(error_msg)
-        flash(error_msg, "error")
-        return jsonify({"error": error_msg}), 500
+        flash(f"❌ Unexpected Error: {str(e)}", "error")
+        return redirect(url_for('admin.create_product_form'))
 
 ### ✅ **GET: Render the Product Edit Form**
 @admin_bp.route('/admin/products/edit/<int:product_id>', methods=['GET'])
