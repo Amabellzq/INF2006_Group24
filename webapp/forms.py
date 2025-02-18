@@ -1,4 +1,5 @@
 # webapp/forms.py
+from cryptography.hazmat.primitives.asymmetric.padding import _Auto
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import TextAreaField, DecimalField, IntegerField
 from wtforms.validators import NumberRange, Optional, DataRequired, Length, Regexp, InputRequired
