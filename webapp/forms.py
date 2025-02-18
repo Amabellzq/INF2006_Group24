@@ -6,33 +6,45 @@ from wtforms.validators import NumberRange, Optional, DataRequired, Length, Rege
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
+from wtforms import StringField, TextAreaField, DecimalField, IntegerField
+from wtforms.validators import DataRequired, NumberRange, Optional, InputRequired
+
 
 class ProductForm(FlaskForm):
     def __init__(self, *args, **kwargs):
-        """Fix initialization to properly inherit FlaskForm behavior."""
+        """Ensure form initializes properly without blocking submission."""
         super(ProductForm, self).__init__(*args, **kwargs)
-        self.image_url = None
+        self.image_url = None  # Ensure this doesn't block submission
 
     name = StringField('Product Name', validators=[DataRequired()])
     description = TextAreaField('Description')
-    original_price = DecimalField('Original Price', validators=[
-        DataRequired(),
-        NumberRange(min=0.01)
-    ])
-    discount_price = DecimalField('Discount Price', validators=[
-        Optional(),  # discount_price can be empty
-        NumberRange(min=0.01)
-    ])
-    stock = IntegerField('Stock Quantity', validators=[
-        InputRequired(),
-        NumberRange(min=0)
-    ])
 
-    # ✅ Fix: Allow selection of existing S3 images instead of only file uploads
+    original_price = DecimalField(
+        'Original Price',
+        validators=[DataRequired(), NumberRange(min=0.01)]
+    )
+
+    discount_price = DecimalField(
+        'Discount Price',
+        validators=[Optional(), NumberRange(min=0.01)],
+        default=None  # ✅ Allow empty values
+    )
+
+    stock = IntegerField(
+        'Stock Quantity',
+        validators=[InputRequired(), NumberRange(min=0)]
+    )
+
+    # ✅ Allow user to select an S3 image OR upload a new one
     image_url = StringField('Image URL', validators=[Optional()])
-    image = FileField('Upload Image', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files are allowed!')
-    ])
+
+    image = FileField(
+        'Upload Image',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files are allowed!')]
+    )
+
 
 class PaymentForm(FlaskForm):
     card_number = StringField(

@@ -64,20 +64,29 @@ def create_product_form():
 @login_required
 def create_product():
     try:
-        # ✅ Extract data from request.form
+        form = ProductForm(request.form)
+
+        # ✅ Validate form submission
+        if not form.validate_on_submit():
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"❌ {field}: {error}", "error")
+            raise ValueError("Form validation failed.")
+
+        # ✅ Extract data and validate
         try:
-            name = request.form.get("name", "").strip()
-            description = request.form.get("description", "").strip()
-            original_price = request.form.get("original_price", "").strip()
-            discount_price = request.form.get("discount_price", "").strip()
-            stock = request.form.get("stock", "").strip()
-            image_url = request.form.get("image_url", "").strip()  # ✅ Use selected S3 image URL
+            name = form.name.data.strip()
+            description = form.description.data.strip()
+            original_price = form.original_price.data
+            discount_price = form.discount_price.data
+            stock = form.stock.data
+            image_url = form.image_url.data  # ✅ Use selected S3 image URL
 
             if not name or not original_price or not stock:
                 flash("❌ Name, Original Price, and Stock are required fields.", "error")
                 raise ValueError("Missing required fields: Name, Original Price, or Stock.")
 
-        except Exception as e:
+        except AttributeError as e:
             flash(f"❌ Error extracting form data: {str(e)}", "error")
             raise
 
