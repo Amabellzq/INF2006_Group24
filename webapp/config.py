@@ -14,6 +14,8 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')  # Security fallback
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
+
+
     # AWS RDS Database Configuration
     DB_USER = os.getenv('DB_USER')  # RDS Master username
     DB_PASSWORD = os.getenv('DB_PASSWORD')

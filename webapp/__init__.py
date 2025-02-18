@@ -8,7 +8,7 @@ from webapp.errors import (
     handle_concurrent_update
 )
 from webapp.models import User
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 csrf = CSRFProtect()  # Initialize CSRF Protection
 
@@ -18,6 +18,10 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     
     csrf.init_app(app)
+
+    @app.context_processor
+    def inject_csrf_token():
+        return dict(csrf_token=generate_csrf())
 
 
     # User loader function
