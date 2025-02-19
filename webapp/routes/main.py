@@ -57,10 +57,13 @@ def health_check():
 def home():
     """Fetch all products and separate Flash Deals from regular products with caching."""
 
+    cache_status = "Cache HIT"  # Default assumption
+
     def fetch_homepage_data():
+        nonlocal cache_status
+        cache_status = "Cache MISS (Fetched from DB)"  # Change if cache miss
         flash_deals = Product.query.filter(Product.discount_price.isnot(None)).order_by(Product.created_at.desc()).all()
         products = Product.query.filter(Product.discount_price.is_(None)).order_by(Product.created_at.desc()).all()
-
         return {
             "flash_deals": [product.to_dict() for product in flash_deals],
             "products": [product.to_dict() for product in products]
@@ -72,8 +75,10 @@ def home():
     return render_template(
         'home.html',
         flash_deals=homepage_data["flash_deals"],
-        products=homepage_data["products"]
+        products=homepage_data["products"],
+        cache_status=cache_status
     )
+
 
 @main_bp.route('/about')
 def about():
