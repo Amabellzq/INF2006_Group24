@@ -2,7 +2,7 @@ import redis
 from flask_session import Session
 from webapp.config import Config
 from flask import Flask, g, request
-from webapp.extensions import db, migrate, ma, login_manager
+from webapp.extensions import db, migrate, ma, login_manager, init_cache
 from webapp.errors import (
     handle_validation_error,
     handle_http_error,
@@ -28,8 +28,8 @@ def create_app(config_class=Config):
     app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken', 'X-XSRF-TOKEN']
     Session(app)
 
-
-
+    # ✅ Initialize Redis Cache
+    init_cache(app)
 
     # User loader function
     @login_manager.user_loader

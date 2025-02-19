@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, render_template
 from sqlalchemy import text
 
 from webapp.models import Product
-from webapp.extensions import db
+from webapp.extensions import db, get_cache_data
 from botocore.exceptions import NoCredentialsError, ClientError
 
 logging.basicConfig(level=logging.INFO)
@@ -36,23 +36,44 @@ def health_check():
         logger.error(f"Database connection error: {e}")
         return jsonify({'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}), 500
 
+# @main_bp.route('/')
+# def home():
+#     """Fetch all products and separate Flash Deals from regular products."""
+
+#     # Flash Deals: Products that have a discount price
+#     flash_deals = Product.query.filter(
+#         Product.discount_price.isnot(None)
+#     ).order_by(Product.created_at.desc()).all()
+
+#     # Regular Products: Products that do NOT have a discount price
+#     products = Product.query.filter(
+#         Product.discount_price.is_(None)
+#     ).order_by(Product.created_at.desc()).all()
+
+
+#     return render_template('home.html', flash_deals=flash_deals, products=products)
+
 @main_bp.route('/')
 def home():
-    """Fetch all products and separate Flash Deals from regular products."""
+    """Fetch all products and separate Flash Deals from regular products with caching."""
 
-    # Flash Deals: Products that have a discount price
-    flash_deals = Product.query.filter(
-        Product.discount_price.isnot(None)
-    ).order_by(Product.created_at.desc()).all()
+    def fetch_homepage_data():
+        flash_deals = Product.query.filter(Product.discount_price.isnot(None)).order_by(Product.created_at.desc()).all()
+        products = Product.query.filter(Product.discount_price.is_(None)).order_by(Product.created_at.desc()).all()
 
-    # Regular Products: Products that do NOT have a discount price
-    products = Product.query.filter(
-        Product.discount_price.is_(None)
-    ).order_by(Product.created_at.desc()).all()
+        return {
+            "flash_deals": [product.to_dict() for product in flash_deals],
+            "products": [product.to_dict() for product in products]
+        }
 
+    # Retrieve homepage data from cache or database
+    homepage_data = get_cache_data("homepage_data", fetch_homepage_data, expiration=600)
 
-    return render_template('home.html', flash_deals=flash_deals, products=products)
-
+    return render_template(
+        'home.html',
+        flash_deals=homepage_data["flash_deals"],
+        products=homepage_data["products"]
+    )
 
 @main_bp.route('/about')
 def about():

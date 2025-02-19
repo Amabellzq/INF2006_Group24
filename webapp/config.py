@@ -2,6 +2,7 @@ import os
 
 import boto3
 from dotenv import load_dotenv
+from redis import Redis
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,8 +16,16 @@ class Config:
     DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
     SESSION_TYPE = 'redis'
 
-    # We'll read the REDIS_URL from .env
+    # Read Redis connection URL from .env
     REDIS_URL = os.environ.get('REDIS_URL')
+
+    # Initialize Redis instance if REDIS_URL is provided
+    if REDIS_URL:
+        SESSION_REDIS = Redis.from_url(REDIS_URL)
+    else:
+        SESSION_REDIS = None  # or set a default Redis URL
+
+
     WTF_CSRF_ENABLED = False
 
 
