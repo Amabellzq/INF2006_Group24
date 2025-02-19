@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, render_template
 from sqlalchemy import text
 
 from webapp.models import Product
-from webapp.extensions import db, cache, get_cache_data
+from webapp.extensions import db
 from botocore.exceptions import NoCredentialsError, ClientError
 
 logging.basicConfig(level=logging.INFO)
