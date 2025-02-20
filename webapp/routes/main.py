@@ -70,7 +70,7 @@ def home():
         }
 
     # Retrieve homepage data from cache or database
-    homepage_data = get_cache_data("homepage_data", fetch_homepage_data, expiration=600)
+    homepage_data = get_cache_data("homepage_data", fetch_homepage_data, expiration=300)
 
     return render_template(
         'home.html',
